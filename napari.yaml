@@ -1,0 +1,38 @@
+arkitekt:
+  host: p-tnagerl-lab1
+  port: 8090
+  secure: false
+  postman:
+    host: p-tnagerl-lab1
+    port: 8090
+    secure: false
+
+logging:
+  stream: true
+  file: true
+  level: INFO
+
+herre:
+  host: p-tnagerl-lab1
+  port: 8000
+  secure: false
+  scopes:
+    - introspection
+    - provider
+    - can_assign
+    - read
+    - can_create_identifier
+  clientID: huKQboFgvLaqfVb23QAJ7Kchp9Rzl87vCVRgWHjZ
+  client_id: go8CAE78FDf4eLsOSk4wkR4usYbsamcq0yTYqBiY
+  client_secret: oO4eJgvv41Nkr9EaNAmZ5YI4WGgfJznUMW5ReGIcI6NsSXZiud3w3y2yGxdMf2WhEMdUKD6MMalLv1rlM8d6h5Q6vJR9vLbaKSHj2V5RpDrNVUWnJ1s2OmxiPSR6qoNH
+  authorization_grant_type: AUTHORIZATION_CODE
+  redirect_uri: http://localhost:3000
+
+mikro:
+  host: p-tnagerl-lab1
+  port: 8080
+  secure: false
+fluss:
+  host: p-tnagerl-lab1
+  port: 8070
+  secure: false

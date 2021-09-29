@@ -1,5 +1,5 @@
 from arkitekt.schema.widgets import SearchWidget
-from PyQt5.QtWidgets import QListWidget, QListWidgetItem, QPushButton
+from PyQt5.QtWidgets import QApplication, QListWidget, QListWidgetItem, QPushButton
 from naparikro.helpers.stage import StageHelper
 from arkitekt.messages.postman.provide.bounced_provide import BouncedProvideMessage
 from qtpy import QtWidgets
@@ -18,6 +18,9 @@ class ArkitektWidget(QtWidgets.QWidget):
         self.loginButton = QPushButton("Login!")
         self.loginButton.clicked.connect(self.login)
         self.layout.addWidget(self.loginButton)
+
+        self.app = QApplication.instance()
+        self.app.lastWindowClosed.connect(self.close)
 
         self.status = QtWidgets.QLabel("Arnheim")
         self.helper = StageHelper(viewer)
@@ -90,7 +93,10 @@ class ArkitektWidget(QtWidgets.QWidget):
             pass
 
 
-
+    def close(self):
+        # do stuff
+        print("STUFFF HAPPENED THERE")
+        self.herre.close()
 
 
 
