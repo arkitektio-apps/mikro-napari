@@ -1,2 +1,20 @@
 Using Insecure Oauth2 Protocol.. Please only for local and debug deployments
 Using Insecure Oauth2 Protocol.. Please only for local and debug deployments
+There is no event-loop in this thread. Lets create a new One
+Running in Seperate Thread so that we can use the sync syntax
+Using Insecure Oauth2 Protocol.. Please only for local and debug deployments
+Exception in callback None()
+handle: <Handle>
+Traceback (most recent call last):
+  File "C:\Python37\lib\asyncio\events.py", line 88, in _run
+    self._context.run(self._callback, *self._args)
+TypeError: 'NoneType' object is not callable
+There is no event-loop in this thread. Lets create a new One
+Running in Seperate Thread so that we can use the sync syntax
+Using Insecure Oauth2 Protocol.. Please only for local and debug deployments
+Exception in callback None()
+handle: <Handle>
+Traceback (most recent call last):
+  File "C:\Python37\lib\asyncio\events.py", line 88, in _run
+    self._context.run(self._callback, *self._args)
+TypeError: 'NoneType' object is not callable
