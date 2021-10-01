@@ -1,6 +1,5 @@
 from arkitekt.schema.widgets import SearchWidget
-from PyQt5.QtWidgets import QApplication, QListWidget, QListWidgetItem, QPushButton
-from naparikro.helpers.stage import StageHelper
+from mikro_napari.helpers.stage import StageHelper
 from arkitekt.messages.postman.provide.bounced_provide import BouncedProvideMessage
 from qtpy import QtWidgets
 from herre import HerreClient
@@ -10,22 +9,22 @@ from mikro.schema import Representation, Sample
 
 class ArkitektWidget(QtWidgets.QWidget):
 
-    def __init__(self, viewer, *args, bergen_params = {}, config_path="napari.yaml", **kwargs):
+    def __init__(self, napari_viewer, *args, bergen_params = {}, config_path="napari.yaml", **kwargs):
         super().__init__(*args, **kwargs)
 
         self.layout = QtWidgets.QVBoxLayout(self)
 
-        self.loginButton = QPushButton("Login!")
+        self.loginButton = QtWidgets.QPushButton("Login!")
         self.loginButton.clicked.connect(self.login)
         self.layout.addWidget(self.loginButton)
 
-        self.app = QApplication.instance()
+        self.app = QtWidgets.QApplication.instance()
         self.app.lastWindowClosed.connect(self.close)
 
         self.status = QtWidgets.QLabel("Arnheim")
-        self.helper = StageHelper(viewer)
+        self.helper = StageHelper(napari_viewer)
 
-        self.provisionsWidget = QListWidget()
+        self.provisionsWidget = QtWidgets.QListWidget()
         self.layout.addWidget(self.provisionsWidget)
 
         self.herre = HerreClient(force_sync=True, config_path=config_path, auto_login=False)

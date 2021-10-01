@@ -1,10 +1,7 @@
 import contextlib
-from naparikro.widgets.main_widget import ArkitektWidget
+from mikro_napari.widgets.main_widget import ArkitektWidget
 
 import napari
-from naparikro.helpers.stage import StageHelper
-from arkitekt.agents import AppAgent
-from arkitekt import SearchWidget
 import numpy as np
 import argparse
 
