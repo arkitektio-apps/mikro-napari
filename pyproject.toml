@@ -12,6 +12,7 @@ mikro = "^0.1.22"
 napari-plugin_engine = "^0.1.4"
 arkitekt = "^0.1.26"
 
+
 [tool.poetry.scripts]
 mikro-napari = "mikro_napari.run:main"
 
