@@ -2,54 +2,57 @@ from arkitekt.schema.widgets import SearchWidget
 from mikro_napari.helpers.stage import StageHelper
 from arkitekt.messages.postman.provide.bounced_provide import BouncedProvideMessage
 from qtpy import QtWidgets
-from herre import HerreClient
-from arkitekt.agents.qt import QtAgent
-from mikro.widgets import MY_TOP_REPRESENTATIONS
+from mikro.widgets import MY_TOP_REPRESENTATIONS, MY_TOP_SAMPLES
 from mikro.schema import Representation, Sample
+from arkitekt.qt.agent import QtAgent
+from arkitekt.qt.widgets.magic_bar import MagicBar
+from arkitekt.qt.widgets.settings_popup import SettingsPopup
+from arkitekt.qt.widgets.provisions import ProvisionsWidget
+from arkitekt.qt.widgets.templates import TemplatesWidget
+from herre.qt import QtHerre
+from fakts.qt import QtFakts
+from fakts.grants.qtyamlgrant import QtYamlGrant
+from fakts.grants.qtbeacon import QtSelectableBeaconGrant
+
+
+class NapariSettings(SettingsPopup):
+
+    def __init__(self, magic_bar, *args, **kwargs):
+        super().__init__(magic_bar, *args, **kwargs)
+        self.layout.addWidget(ProvisionsWidget(magic_bar.agent))
+        self.layout.addWidget(TemplatesWidget(magic_bar.agent))
+
+
+class NapariMagicBar(MagicBar):
+    settingsPopupClass = NapariSettings
+
 
 class ArkitektWidget(QtWidgets.QWidget):
 
-    def __init__(self, napari_viewer, *args, bergen_params = {}, config_path="napari.yaml", **kwargs):
-        super().__init__(*args, **kwargs)
 
-        self.layout = QtWidgets.QVBoxLayout(self)
+    def __init__(self, napari_viewer, *args, parent=None,**kwargs) -> None:
+        super().__init__(*args, **kwargs, parent=parent)
 
-        self.loginButton = QtWidgets.QPushButton("Login!")
-        self.loginButton.clicked.connect(self.login)
-        self.layout.addWidget(self.loginButton)
+        # Different Grants
 
-        self.app = QtWidgets.QApplication.instance()
-        self.app.lastWindowClosed.connect(self.close)
+        self.file_grant = QtYamlGrant("querk.yaml")
+        self.beacon_grant = QtSelectableBeaconGrant()
+        self.fakts = QtFakts(grants=[self.file_grant, self.beacon_grant], save_conf="querk.yaml")
+        self.herre = QtHerre()
+        self.agent = QtAgent(self)
 
-        self.status = QtWidgets.QLabel("Arnheim")
+
         self.helper = StageHelper(napari_viewer)
 
-        self.provisionsWidget = QtWidgets.QListWidget()
-        self.layout.addWidget(self.provisionsWidget)
+        self.magic_bar = NapariMagicBar(self.fakts, self.herre, self.agent, parent=self)
 
-        self.herre = HerreClient(force_sync=True, config_path=config_path, auto_login=False)
-        self.provisions = {}
-        self.agent = QtAgent(self)
-        self.agent.register(widgets={"rep": MY_TOP_REPRESENTATIONS}, on_provide=self.on_provide)(self.really_show)
-        self.agent.register(widgets={
-        "sample": SearchWidget(query="""
-            query Search($search: String){
-                options: samples(name: $search) {
-                    value: id
-                    label: name
-                }
-            }
-        """)
-    }, on_provide=self.on_provide)(self.upload)
+        self.agent.register(self.really_show, widgets={"rep": MY_TOP_REPRESENTATIONS}, on_assign=self.really_show)
+        self.agent.register(self.upload, widgets={"sample": MY_TOP_SAMPLES}, on_assign=self.upload)
 
 
-
-
-    def on_provide(self, message: BouncedProvideMessage):
-        self.provisions[message.meta.reference] = message
-        self.provisionsWidget.clear()
-        for key,value in self.provisions.items():
-            self.provisionsWidget.addItem(f"Really Show used by {message.meta.context.user}")
+        self.layout = QtWidgets.QVBoxLayout()
+        self.layout.addWidget(self.magic_bar)
+        self.setLayout(self.layout)
 
 
     def really_show(self, rep: Representation):
@@ -77,25 +80,6 @@ class ArkitektWidget(QtWidgets.QWidget):
         array = self.helper.get_active_layer_as_xarray()
         return Representation.objects.from_xarray(array, name=name, sample=sample, tags=[])
 
-
-    def login(self):
-        if not self.herre.logged_in:
-            self.herre.login()
-
-            self.agent.provide(as_task=True)
-
-            rep = Representation.objects.get(id=1)
-            self.loginButton.setText(f"Logout {self.herre.user.username}")
-        else:
-            self.herre.logout()
-            self.loginButton.setText("Login!")
-            pass
-
-
-    def close(self):
-        # do stuff
-        print("STUFFF HAPPENED THERE")
-        self.herre.close()
 
 
 
