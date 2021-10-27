@@ -13,7 +13,6 @@ class StageHelper:
             self.viewer.add_labels(rep.data.sel(c=0).data, name=rep.name, metadata={"rep":rep})
         else:
             array = rep.data.squeeze()
-            print(rep.variety)
 
             if rep.variety == RepresentationVariety.VOXEL or rep.variety == RepresentationVariety.UNKNOWN:
                 if "t" in array.dims:

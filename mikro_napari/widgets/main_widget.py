@@ -35,19 +35,19 @@ class ArkitektWidget(QtWidgets.QWidget):
 
         # Different Grants
 
-        self.file_grant = QtYamlGrant("querk.yaml")
+        self.file_grant = QtYamlGrant()
         self.beacon_grant = QtSelectableBeaconGrant()
-        self.fakts = QtFakts(grants=[self.file_grant, self.beacon_grant], save_conf="querk.yaml")
+        self.fakts = QtFakts(grants=[self.file_grant, self.beacon_grant], name="napari")
         self.herre = QtHerre()
         self.agent = QtAgent(self)
 
 
         self.helper = StageHelper(napari_viewer)
 
-        self.magic_bar = NapariMagicBar(self.fakts, self.herre, self.agent, parent=self)
+        self.magic_bar = NapariMagicBar(self.fakts, self.herre, self.agent, parent=self, darkMode=True)
 
-        self.agent.register(self.really_show, widgets={"rep": MY_TOP_REPRESENTATIONS}, on_assign=self.really_show)
-        self.agent.register(self.upload, widgets={"sample": MY_TOP_SAMPLES}, on_assign=self.upload)
+        self.agent.register_ui(self.really_show, widgets={"rep": MY_TOP_REPRESENTATIONS}, on_assign=self.really_show)
+        self.agent.register_ui(self.upload, widgets={"sample": MY_TOP_SAMPLES}, on_assign=self.upload)
 
 
         self.layout = QtWidgets.QVBoxLayout()
