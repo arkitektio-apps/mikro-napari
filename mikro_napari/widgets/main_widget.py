@@ -11,8 +11,7 @@ from arkitekt.qt.widgets.provisions import ProvisionsWidget
 from arkitekt.qt.widgets.templates import TemplatesWidget
 from herre.qt import QtHerre
 from fakts.qt import QtFakts
-from fakts.grants.qtyamlgrant import QtYamlGrant
-from fakts.grants.qtbeacon import QtSelectableBeaconGrant
+from fakts.grants.qt.qtbeacon import QtSelectableBeaconGrant
 
 
 class NapariSettings(SettingsPopup):
@@ -35,9 +34,8 @@ class ArkitektWidget(QtWidgets.QWidget):
 
         # Different Grants
 
-        self.file_grant = QtYamlGrant()
         self.beacon_grant = QtSelectableBeaconGrant()
-        self.fakts = QtFakts(grants=[self.file_grant, self.beacon_grant], name="napari")
+        self.fakts = QtFakts(grants=[self.beacon_grant], hard_fakts={"herre": {"client_id": "go8CAE78FDf4eLsOSk4wkR4usYbsamcq0yTYqBiY"}})
         self.herre = QtHerre()
         self.agent = QtAgent(self)
 
