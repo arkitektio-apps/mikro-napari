@@ -15,7 +15,6 @@ from fakts.grants.qt.qtbeacon import QtSelectableBeaconGrant
 
 
 class NapariSettings(SettingsPopup):
-
     def __init__(self, magic_bar, *args, **kwargs):
         super().__init__(magic_bar, *args, **kwargs)
         self.layout.addWidget(ProvisionsWidget(magic_bar.agent))
@@ -27,31 +26,40 @@ class NapariMagicBar(MagicBar):
 
 
 class ArkitektWidget(QtWidgets.QWidget):
-
-
-    def __init__(self, napari_viewer, *args, parent=None,**kwargs) -> None:
+    def __init__(self, napari_viewer, *args, parent=None, **kwargs) -> None:
         super().__init__(*args, **kwargs, parent=parent)
 
         # Different Grants
 
         self.beacon_grant = QtSelectableBeaconGrant()
-        self.fakts = QtFakts(grants=[self.beacon_grant], hard_fakts={"herre": {"client_id": "go8CAE78FDf4eLsOSk4wkR4usYbsamcq0yTYqBiY"}})
+        self.fakts = QtFakts(
+            grants=[self.beacon_grant],
+            subapp="napari",
+            hard_fakts={
+                "herre": {"client_id": "go8CAE78FDf4eLsOSk4wkR4usYbsamcq0yTYqBiY"}
+            },
+        )
         self.herre = QtHerre()
         self.agent = QtAgent(self)
 
-
         self.helper = StageHelper(napari_viewer)
 
-        self.magic_bar = NapariMagicBar(self.fakts, self.herre, self.agent, parent=self, darkMode=True)
+        self.magic_bar = NapariMagicBar(
+            self.fakts, self.herre, self.agent, parent=self, darkMode=True
+        )
 
-        self.agent.register_ui(self.really_show, widgets={"rep": MY_TOP_REPRESENTATIONS}, on_assign=self.really_show)
-        self.agent.register_ui(self.upload, widgets={"sample": MY_TOP_SAMPLES}, on_assign=self.upload)
-
+        self.agent.register_ui(
+            self.really_show,
+            widgets={"rep": MY_TOP_REPRESENTATIONS},
+            on_assign=self.really_show,
+        )
+        self.agent.register_ui(
+            self.upload, widgets={"sample": MY_TOP_SAMPLES}, on_assign=self.upload
+        )
 
         self.layout = QtWidgets.QVBoxLayout()
         self.layout.addWidget(self.magic_bar)
         self.setLayout(self.layout)
-
 
     def really_show(self, rep: Representation):
         """Show Representaiton
@@ -76,9 +84,8 @@ class ArkitektWidget(QtWidgets.QWidget):
             Representation: The uploaded image from the app
         """
         array = self.helper.get_active_layer_as_xarray()
-        return Representation.objects.from_xarray(array, name=name, sample=sample, tags=[])
+        print(array)
 
-
-
-
-   
+        return Representation.objects.from_xarray(
+            array, name=name, sample=sample, tags=[]
+        )
