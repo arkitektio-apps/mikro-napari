@@ -48,12 +48,12 @@ class ArkitektWidget(QtWidgets.QWidget):
             self.fakts, self.herre, self.agent, parent=self, darkMode=True
         )
 
-        self.agent.register_ui(
+        self.agent.register_side(
             self.really_show,
             widgets={"rep": MY_TOP_REPRESENTATIONS},
             on_assign=self.really_show,
         )
-        self.agent.register_ui(
+        self.agent.register_side(
             self.upload, widgets={"sample": MY_TOP_SAMPLES}, on_assign=self.upload
         )
 
@@ -61,15 +61,16 @@ class ArkitektWidget(QtWidgets.QWidget):
         self.layout.addWidget(self.magic_bar)
         self.setLayout(self.layout)
 
-    def really_show(self, rep: Representation):
+    def really_show(self, rep: Representation, stream: bool = True):
         """Show Representaiton
 
-        Shows a Dialog for the user to accept or not
+        Displays an Image on Napari
 
         Args:
-            rep (Representation): [description]
+            rep (Representation): The image you want to display
+            stream (bool, optional): Do you want to stream the image or download it?
         """
-        self.helper.open_as_layer(rep)
+        return self.helper.open_as_layer(rep)
 
     def upload(self, name: str = None, sample: Sample = None) -> Representation:
         """Upload an Active Image
@@ -84,7 +85,6 @@ class ArkitektWidget(QtWidgets.QWidget):
             Representation: The uploaded image from the app
         """
         array = self.helper.get_active_layer_as_xarray()
-        print(array)
 
         return Representation.objects.from_xarray(
             array, name=name, sample=sample, tags=[]
