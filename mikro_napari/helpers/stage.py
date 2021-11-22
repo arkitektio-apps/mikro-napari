@@ -1,10 +1,16 @@
+from napari.layers.image.image import Image
+from napari.layers.points.points import Points
+from napari.layers.tracks.tracks import Tracks
 from koil.qt import FutureWrapper
-from mikro.schema import Representation, RepresentationVariety
+from mikro.schema import Representation, RepresentationVariety, Sample, Table
 from napari import Viewer
 import xarray as xr
 from qtpy import QtWidgets
 from qtpy.QtCore import Signal, QObject
 import logging
+from mikro import gql
+import pandas as pd
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +26,7 @@ class DownloadIndicator(QtWidgets.QWidget):
 
 class StageHelper(QObject):
     openStack = Signal(xr.DataArray, Representation)
+    openPoints = Signal(np.ndarray, str)
     openLabels = Signal(xr.DataArray, Representation)
     openImage = Signal(xr.DataArray, Representation)
     downloadingImage = Signal(Representation)
@@ -33,6 +40,7 @@ class StageHelper(QObject):
 
         self.openImage.connect(self.open_xarray_as_rgb)
         self.openStack.connect(self.open_xarray_as_stack)
+        self.openPoints.connect(self.open_array_as_points)
         self.openLabels.connect(self.open_xarray_as_labels)
 
         self.downloadingImage.connect(self.on_image_download)
@@ -51,7 +59,13 @@ class StageHelper(QObject):
             rgb=False,
             name=rep.name,
             metadata={"rep": rep},
-        )  # why this werid transposing... hate napari
+        )
+
+    def open_array_as_points(self, array: np.ndarray, name="Points"):
+        self.viewer.add_points(
+            array,
+            name=name,
+        )
 
     def open_xarray_as_rgb(self, array: xr.DataArray, rep: Representation):
         self.viewer.add_image(
@@ -70,7 +84,6 @@ class StageHelper(QObject):
         )  # why this werid transposing... hate napari
 
     def open_as_layer(self, rep: Representation, stream=True):
-        stream = False
         array = rep.data.squeeze()
 
         if (
@@ -140,8 +153,122 @@ class StageHelper(QObject):
                 f"Cannot open Representation of Variety {rep.variety}"
             )
 
+    def open_with_localizations(self, rep: Representation):
+
+        query = gql(
+            """
+            query Representation($id: ID!){
+                representation(id: $id){
+                    store
+                    name
+                    tables(tags: ["localization"]) {
+                        id
+                        store
+                    }
+                }
+            }
+            """
+        ).run(id=rep.id)
+
+        rep = query.representation
+        localizations = rep.tables[0].data
+        localizations = localizations[
+            [
+                "Plane",
+                "CentroidY(px)",
+                "CentroidX(px)",
+            ]
+        ]
+        locs = localizations.to_numpy()
+        print(locs.shape)
+
+        self.openStack.emit(rep.data.compute(), rep)
+        self.openPoints.emit(locs, "localizations")
+
+    def upload_everything(self, image_name: str = None, sample: Sample = None):
+
+        assert len(self.viewer.layers.selection) > 0, "No Image Was Selected"
+
+        image_layers = [
+            layer for layer in self.viewer.layers.selection if isinstance(layer, Image)
+        ]
+
+        assert len(image_layers) != 0, "You need to select only one image to upload"
+        assert (
+            len(image_layers) == 1
+        ), "You can only have one and only one Image selected (points are okay)"
+
+        image_layer = image_layers[0]
+
+        image_layer.data
+        image_layer.ndim
+
+        assert image_layer.ndim >= 2, "This is not an Image"
+
+        if image_layer.ndim == 2:
+            if image_layer.rgb:
+                xarray = (
+                    xr.DataArray(image_layer.data, dims=list("xyc"))
+                    .expand_dims("z")
+                    .expand_dims("t")
+                )
+            else:
+                xarray = (
+                    xr.DataArray(image_layer.data, dims=list("xy"))
+                    .expand_dims("c")
+                    .expand_dims("z")
+                    .expand_dims("t")
+                )
+
+        if image_layer.ndim == 3:
+            xarray = (
+                xr.DataArray(image_layer.data, dims=list("xyz"))
+                .expand_dims("c")
+                .expand_dims("t")
+            )
+
+        if image_layer.ndim == 4:
+            xarray = xr.DataArray(image_layer.data, dims=list("xyzt")).expand_dims("c")
+
+        if image_layer.ndim == 5:
+            xarray = xr.DataArray(image_layer.data, dims=list("xyzt")).expand_dims("c")
+
+        rep = Representation.objects.from_xarray(
+            xarray, name=image_name or image_layer.name, sample=sample
+        )
+
+        point_layers = [
+            layer for layer in self.viewer.layers.selection if isinstance(layer, Points)
+        ]
+
+        for layer in point_layers:
+
+            layer_data = layer.data
+            point_dims = layer_data.shape[1]
+
+            if point_dims == 3:
+                points_df = pd.DataFrame(
+                    data=layer_data, columns=["IndexZ", "IndexX", "IndexY"]
+                )
+            if point_dims == 2:
+                points_df = pd.DataFrame(data=layer_data, columns=["IndexX", "IndexY"])
+
+            table = Table.objects.from_df(
+                points_df, name=layer.name, representation=rep, tags=["roi:points"]
+            )
+            print(table)
+
+        track_layers = [
+            layer for layer in self.viewer.layers.selection if isinstance(layer, Tracks)
+        ]
+
+        print(track_layers)
+
+        return rep
+
     def get_active_layer_as_xarray(self):
-        layer = self.viewer.active_layer
+        layer = self.viewer.layers[0]
+
         data = layer.data
         ndim = layer.ndim
 
@@ -176,4 +303,4 @@ class StageHelper(QObject):
             else:
                 raise NotImplementedError("Dont know")
 
-        return stack
+        return stack, layer.name

@@ -25,6 +25,18 @@ class NapariMagicBar(MagicBar):
     settingsPopupClass = NapariSettings
 
 
+SMLM_REPRESENTATIONS = SearchWidget(
+    query="""
+                    query Search($search: String){
+                        options: representations(name: $search, tags: ["smlm"]){
+                            value: id
+                            label: name
+                        }
+                    }
+                    """
+)
+
+
 class ArkitektWidget(QtWidgets.QWidget):
     def __init__(self, napari_viewer, *args, parent=None, **kwargs) -> None:
         super().__init__(*args, **kwargs, parent=parent)
@@ -56,6 +68,11 @@ class ArkitektWidget(QtWidgets.QWidget):
         self.agent.register_side(
             self.upload, widgets={"sample": MY_TOP_SAMPLES}, on_assign=self.upload
         )
+        self.agent.register_side(
+            self.open_locs,
+            widgets={"rep": SMLM_REPRESENTATIONS},
+            on_assign=self.open_locs,
+        )
 
         self.layout = QtWidgets.QVBoxLayout()
         self.layout.addWidget(self.magic_bar)
@@ -72,6 +89,17 @@ class ArkitektWidget(QtWidgets.QWidget):
         """
         return self.helper.open_as_layer(rep)
 
+    def open_locs(self, rep: Representation):
+        """Open Localization
+
+        Opens this Image with Localization data displayed
+
+        Args:
+            rep (Representation): The image you want to display
+            stream (bool, optional): Do you want to stream the image or download it?
+        """
+        return self.helper.open_with_localizations(rep)
+
     def upload(self, name: str = None, sample: Sample = None) -> Representation:
         """Upload an Active Image
 
@@ -84,8 +112,4 @@ class ArkitektWidget(QtWidgets.QWidget):
         Returns:
             Representation: The uploaded image from the app
         """
-        array = self.helper.get_active_layer_as_xarray()
-
-        return Representation.objects.from_xarray(
-            array, name=name, sample=sample, tags=[]
-        )
+        return self.helper.upload_everything(image_name=name, sample=sample)
