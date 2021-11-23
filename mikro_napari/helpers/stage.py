@@ -222,16 +222,16 @@ class StageHelper(QObject):
 
         if image_layer.ndim == 3:
             xarray = (
-                xr.DataArray(image_layer.data, dims=list("xyz"))
+                xr.DataArray(image_layer.data, dims=list("zxy"))
                 .expand_dims("c")
                 .expand_dims("t")
             )
 
         if image_layer.ndim == 4:
-            xarray = xr.DataArray(image_layer.data, dims=list("xyzt")).expand_dims("c")
+            xarray = xr.DataArray(image_layer.data, dims=list("tzxy")).expand_dims("c")
 
         if image_layer.ndim == 5:
-            xarray = xr.DataArray(image_layer.data, dims=list("xyzt")).expand_dims("c")
+            xarray = xr.DataArray(image_layer.data, dims=list("tzxyc"))
 
         rep = Representation.objects.from_xarray(
             xarray, name=image_name or image_layer.name, sample=sample
