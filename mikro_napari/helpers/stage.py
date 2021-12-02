@@ -180,7 +180,6 @@ class StageHelper(QObject):
             ]
         ]
         locs = localizations.to_numpy()
-        print(locs.shape)
 
         self.openStack.emit(rep.data.compute(), rep)
         self.openPoints.emit(locs, "localizations")
@@ -256,13 +255,10 @@ class StageHelper(QObject):
             table = Table.objects.from_df(
                 points_df, name=layer.name, representation=rep, tags=["roi:points"]
             )
-            print(table)
 
         track_layers = [
             layer for layer in self.viewer.layers.selection if isinstance(layer, Tracks)
         ]
-
-        print(track_layers)
 
         return rep
 

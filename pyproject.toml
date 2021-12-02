@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mikro-napari"
-version = "0.1.38"
+version = "0.1.39"
 description = ""
 authors = ["jhnnsrs <jhnnsrs@gmail.com>"]
 license = "CC BY-NC 3.0"
