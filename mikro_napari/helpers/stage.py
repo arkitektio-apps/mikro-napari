@@ -1,3 +1,4 @@
+from typing import List
 from napari.layers.image.image import Image
 from napari.layers.points.points import Points
 from napari.layers.tracks.tracks import Tracks
@@ -11,6 +12,7 @@ import logging
 from mikro import gql
 import pandas as pd
 import numpy as np
+import dask.array as da
 
 logger = logging.getLogger(__name__)
 
@@ -24,8 +26,26 @@ class DownloadIndicator(QtWidgets.QWidget):
         self.label.setText(f"Downloading {rep.name}")
 
 
+def expand_shape(array, shape):
+    """Expand to given shape padding with zeros"""
+    if array.shape == shape:
+        return array
+
+    x = da.zeros(shape)
+    x[
+        : array.shape[0],
+        : array.shape[1],
+        : array.shape[2],
+        : array.shape[3],
+        : array.shape[4],
+    ] = array
+    return xr.DataArray(x, dims=array.dims)
+
+
 class StageHelper(QObject):
     openStack = Signal(xr.DataArray, Representation)
+    openMultiStack = Signal(list, Representation)
+    addImage = Signal(tuple, dict)
     openPoints = Signal(np.ndarray, str)
     openLabels = Signal(xr.DataArray, Representation)
     openImage = Signal(xr.DataArray, Representation)
@@ -40,6 +60,8 @@ class StageHelper(QObject):
 
         self.openImage.connect(self.open_xarray_as_rgb)
         self.openStack.connect(self.open_xarray_as_stack)
+        self.addImage.connect(self._add_image)
+        self.openMultiStack.connect(self.open_xarray_as_multiview)
         self.openPoints.connect(self.open_array_as_points)
         self.openLabels.connect(self.open_xarray_as_labels)
 
@@ -52,6 +74,20 @@ class StageHelper(QObject):
 
     def on_image_downloaded(self, rep: Representation):
         self.downloadingDialog.hide()
+
+    def open_xarray_as_multiview(self, items: list, rep: Representation):
+        self.viewer.add_image(
+            items,
+            name=rep.name,
+            multiscale=True,
+            metadata={"rep": rep},
+        )
+
+    def add_image(self, *args, **kwargs):
+        self.addImage.emit(args, kwargs)
+
+    def _add_image(self, args, kwargs):
+        self.viewer.add_image(*args, **kwargs)
 
     def open_xarray_as_stack(self, array: xr.DataArray, rep: Representation):
         self.viewer.add_image(
@@ -77,8 +113,7 @@ class StageHelper(QObject):
 
     def open_xarray_as_labels(self, array: xr.DataArray, rep: Representation):
         self.viewer.add_labels(
-            rep,
-            rgb=False,
+            array,
             name=rep.name,
             metadata={"rep": rep},
         )  # why this werid transposing... hate napari
@@ -152,6 +187,195 @@ class StageHelper(QObject):
             raise NotImplementedError(
                 f"Cannot open Representation of Variety {rep.variety}"
             )
+
+    def open_multiscale(self, rep: Representation):
+
+        query = gql(
+            """
+            query DetailRep($id: ID!) {
+                representation(id: $id){
+                    name
+                    store
+                    derived(tags: ["multiscale"]) {
+                        name
+                        tags
+                        meta 
+                        store
+                    }
+                }
+            }
+            """
+        ).run(id=rep.id)
+
+        parent = query.representation
+
+        childrens = [rep.data.squeeze() for rep in query.representation.derived]
+
+        self.openMultiStack.emit([parent.data.squeeze()] + childrens, parent)
+
+    def open_aside(self, reps: List[Representation]):
+
+        query = gql(
+            """
+            query DetailRep($ids: [String]) {
+                representations(ids: $ids){
+                    name
+                    store
+                }
+            }
+            """
+        ).run(ids=reps)
+
+        max_shape = np.max([rep.data.shape for rep in reps], axis=0)
+        arrays = [da.zeros(max_shape) for rep in reps]
+        for index, array in enumerate(arrays):
+            array[
+                : reps[index].data.shape[0],
+                : reps[index].data.shape[1],
+                : reps[index].data.shape[2],
+                : reps[index].data.shape[3],
+                : reps[index].data.shape[4],
+            ] = reps[index].data
+
+        concatz = xr.DataArray(da.concatenate(arrays, axis=4)).compute()
+
+        self.openStack.emit(concatz, reps[0])
+
+    def open_sample(self, sample: Sample, stream=True):
+
+        query = gql(
+            """
+            query DetailSample($id: ID!) {
+              sample(id: $id){
+                  name
+                  representations(order: ["meta__t"],tags: ["initial"] ){
+                    omero {
+                        scale
+                    }
+                    meta
+                    name
+                    store
+                    tags
+              }
+              }
+
+          }
+            """
+        ).run(id=sample.id)
+
+        sample = query.sample
+        firstrep = query.sample.representations[0]
+
+        arrays = [
+            rep.data
+            for rep in query.sample.representations
+            if rep.data.shape == firstrep.data.shape
+        ]
+
+        array = xr.concat(arrays, dim="t")
+        if not stream:
+            array = array.compute()
+
+        self.add_image(array, rgb=False, name=sample.name, scale=firstrep.omero.scale)
+
+    def open_multisample(self, samples: List[Sample], stream=False):
+
+        query = gql(
+            """
+            query MultiScaleSamples($ids: [ID]) {
+                samples(ids: $ids){
+                    id
+                    name
+                    representations(order: ["meta__t"], limit: 9){
+                        omero {
+                            scale
+                        }
+                        derived(tags:"cropped")	{
+                                shape
+                                tags
+                                store
+                                derived(order: ["meta__multiscale:depth"], tags: ["multiscale"]) {
+                                    meta
+                                    store
+                                    shape
+                                }
+                        }
+                        shape
+                        meta
+                        name
+                        store
+                        tags
+                }
+                }
+
+            }
+            """
+        )
+
+        multiscale = query.run(ids=[sample.id for sample in samples])
+
+        omero_scale = multiscale.samples[0].representations[0].omero.scale
+        multiscales = {}
+
+        for sample in multiscale.samples:
+            for timepoint in sample.representations:
+
+                cropped_rep = timepoint.derived[0]
+
+                multiscales.setdefault(0, {}).setdefault(sample.name, {})[
+                    timepoint.meta["t"]
+                ] = cropped_rep.data
+
+                for scaled_rep in cropped_rep.derived:
+                    multiscales.setdefault(
+                        scaled_rep.meta["multiscale:depth"], {}
+                    ).setdefault(sample.name, {})[timepoint.meta["t"]] = scaled_rep.data
+
+        arrays = []
+        for scale, value in multiscales.items():
+            sample_data = []
+            for sample, item in value.items():
+                max_shape = tuple(
+                    np.array([d.shape for key, d in item.items()]).max(axis=0)
+                )
+
+                sample_data.append(
+                    xr.concat(
+                        [
+                            expand_shape(timepoint_data, max_shape)
+                            for key, timepoint_data in item.items()
+                        ],
+                        dim="t",
+                    )
+                )
+
+            max_s_shape = tuple(np.array([d.shape for d in sample_data]).max(axis=0))
+            expanded_sample_data = [
+                expand_shape(sample, max_s_shape) for sample in sample_data
+            ]
+
+            if len(expanded_sample_data) % 2 == 0:
+                arrays.append(
+                    da.block(
+                        [
+                            [expanded_sample_data[i], expanded_sample_data[i + 1]]
+                            for i in range(0, len(expanded_sample_data), 2)
+                        ]
+                    )
+                )
+            else:
+                arrays.append(xr.concat(expanded_sample_data, dim="x"))
+
+        print([array.nbytes for array in arrays])
+        array = next(filter(lambda array: array.nbytes < 1000000000, arrays))
+        if not stream:
+            array = array.compute()
+
+        self.add_image(
+            array,
+            name=" ".join([sample.name for sample in samples]),
+            scale=omero_scale,
+        )
 
     def open_with_localizations(self, rep: Representation):
 
