@@ -2,8 +2,6 @@ from typing import List
 from napari.layers.image.image import Image
 from napari.layers.points.points import Points
 from napari.layers.tracks.tracks import Tracks
-from koil.qt import FutureWrapper
-from mikro.schema import Representation, RepresentationVariety, Sample, Table
 from napari import Viewer
 import xarray as xr
 from qtpy import QtWidgets
@@ -13,6 +11,15 @@ from mikro import gql
 import pandas as pd
 import numpy as np
 import dask.array as da
+from mikro.api.schema import (
+    RepresentationVariety,
+    SampleFragment,
+    from_xarray,
+    from_df,
+    RepresentationFragment,
+)
+
+from mikro.array import Array
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +29,7 @@ class DownloadIndicator(QtWidgets.QWidget):
         super().__init__(*args, **kwargs)
         self.label = QtWidgets.QLabel("Downloading")
 
-    def setLabel(self, rep: Representation):
+    def setLabel(self, rep: Array):
         self.label.setText(f"Downloading {rep.name}")
 
 
@@ -43,14 +50,14 @@ def expand_shape(array, shape):
 
 
 class StageHelper(QObject):
-    openStack = Signal(xr.DataArray, Representation)
-    openMultiStack = Signal(list, Representation)
+    openStack = Signal(xr.DataArray, Array)
+    openMultiStack = Signal(list, Array)
     addImage = Signal(tuple, dict)
     openPoints = Signal(np.ndarray, str)
-    openLabels = Signal(xr.DataArray, Representation)
-    openImage = Signal(xr.DataArray, Representation)
-    downloadingImage = Signal(Representation)
-    downloadingDone = Signal(Representation)
+    openLabels = Signal(xr.DataArray, Array)
+    openImage = Signal(xr.DataArray, Array)
+    downloadingImage = Signal(Array)
+    downloadingDone = Signal(Array)
 
     def __init__(self, viewer: Viewer, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -68,14 +75,14 @@ class StageHelper(QObject):
         self.downloadingImage.connect(self.on_image_download)
         self.downloadingDone.connect(self.on_image_downloaded)
 
-    def on_image_download(self, rep: Representation):
+    def on_image_download(self, rep: Array):
         self.downloadingDialog.setLabel(rep)
         self.downloadingDialog.show()
 
-    def on_image_downloaded(self, rep: Representation):
+    def on_image_downloaded(self, rep: Array):
         self.downloadingDialog.hide()
 
-    def open_xarray_as_multiview(self, items: list, rep: Representation):
+    def open_xarray_as_multiview(self, items: list, rep: Array):
         self.viewer.add_image(
             items,
             name=rep.name,
@@ -89,7 +96,7 @@ class StageHelper(QObject):
     def _add_image(self, args, kwargs):
         self.viewer.add_image(*args, **kwargs)
 
-    def open_xarray_as_stack(self, array: xr.DataArray, rep: Representation):
+    def open_xarray_as_stack(self, array: xr.DataArray, rep: Array):
         self.viewer.add_image(
             array,
             rgb=False,
@@ -103,7 +110,7 @@ class StageHelper(QObject):
             name=name,
         )
 
-    def open_xarray_as_rgb(self, array: xr.DataArray, rep: Representation):
+    def open_xarray_as_rgb(self, array: xr.DataArray, rep: Array):
         self.viewer.add_image(
             array,
             rgb=True,
@@ -111,14 +118,14 @@ class StageHelper(QObject):
             metadata={"rep": rep},
         )  # why this werid transposing... hate napari
 
-    def open_xarray_as_labels(self, array: xr.DataArray, rep: Representation):
+    def open_xarray_as_labels(self, array: xr.DataArray, rep: Array):
         self.viewer.add_labels(
             array,
             name=rep.name,
             metadata={"rep": rep},
         )  # why this werid transposing... hate napari
 
-    def open_as_layer(self, rep: Representation, stream=True):
+    def open_as_layer(self, rep: Array, stream=True):
         array = rep.data.squeeze()
 
         if (
@@ -188,7 +195,7 @@ class StageHelper(QObject):
                 f"Cannot open Representation of Variety {rep.variety}"
             )
 
-    def open_multiscale(self, rep: Representation):
+    def open_multiscale(self, rep: RepresentationFragment):
 
         query = gql(
             """
@@ -213,7 +220,7 @@ class StageHelper(QObject):
 
         self.openMultiStack.emit([parent.data.squeeze()] + childrens, parent)
 
-    def open_aside(self, reps: List[Representation]):
+    def open_aside(self, reps: List[RepresentationFragment]):
 
         query = gql(
             """
@@ -241,7 +248,7 @@ class StageHelper(QObject):
 
         self.openStack.emit(concatz, reps[0])
 
-    def open_sample(self, sample: Sample, stream=True):
+    def open_sample(self, sample: SampleFragment, stream=True):
 
         query = gql(
             """
@@ -278,7 +285,7 @@ class StageHelper(QObject):
 
         self.add_image(array, rgb=False, name=sample.name, scale=firstrep.omero.scale)
 
-    def open_multisample(self, samples: List[Sample], stream=False):
+    def open_multisample(self, samples: List[SampleFragment], stream=False):
 
         query = gql(
             """
@@ -377,7 +384,7 @@ class StageHelper(QObject):
             scale=omero_scale,
         )
 
-    def open_with_localizations(self, rep: Representation):
+    def open_with_localizations(self, rep: RepresentationFragment):
 
         query = gql(
             """
@@ -408,7 +415,7 @@ class StageHelper(QObject):
         self.openStack.emit(rep.data.compute(), rep)
         self.openPoints.emit(locs, "localizations")
 
-    def upload_everything(self, image_name: str = None, sample: Sample = None):
+    def upload_everything(self, image_name: str = None, sample: SampleFragment = None):
 
         assert len(self.viewer.layers.selection) > 0, "No Image Was Selected"
 
@@ -456,9 +463,7 @@ class StageHelper(QObject):
         if image_layer.ndim == 5:
             xarray = xr.DataArray(image_layer.data, dims=list("tzxyc"))
 
-        rep = Representation.objects.from_xarray(
-            xarray, name=image_name or image_layer.name, sample=sample
-        )
+        rep = from_xarray(xarray, name=image_name or image_layer.name, sample=sample)
 
         point_layers = [
             layer for layer in self.viewer.layers.selection if isinstance(layer, Points)
@@ -476,7 +481,7 @@ class StageHelper(QObject):
             if point_dims == 2:
                 points_df = pd.DataFrame(data=layer_data, columns=["IndexX", "IndexY"])
 
-            table = Table.objects.from_df(
+            table = from_df(
                 points_df, name=layer.name, representation=rep, tags=["roi:points"]
             )
 
