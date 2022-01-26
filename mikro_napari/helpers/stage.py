@@ -1,4 +1,7 @@
+from ast import Mult
 from typing import List
+from mikro_napari.api.schema import MultiScaleSampleFragment
+from mikro_napari.api.structures import MultiScaleSample
 from napari.layers.image.image import Image
 from napari.layers.points.points import Points
 from napari.layers.tracks.tracks import Tracks
@@ -248,34 +251,14 @@ class StageHelper(QObject):
 
         self.openStack.emit(concatz, reps[0])
 
-    def open_sample(self, sample: SampleFragment, stream=True):
+    def open_sample(self, sample: MultiScaleSampleFragment, stream=True):
 
-        query = gql(
-            """
-            query DetailSample($id: ID!) {
-              sample(id: $id){
-                  name
-                  representations(order: ["meta__t"],tags: ["initial"] ){
-                    omero {
-                        scale
-                    }
-                    meta
-                    name
-                    store
-                    tags
-              }
-              }
-
-          }
-            """
-        ).run(id=sample.id)
-
-        sample = query.sample
-        firstrep = query.sample.representations[0]
+        firstrep = sample.representations[0]
+        firstrep.store
 
         arrays = [
             rep.data
-            for rep in query.sample.representations
+            for rep in sample.representations
             if rep.data.shape == firstrep.data.shape
         ]
 

@@ -1,12 +1,11 @@
 from typing import List
 from arkitekt.serialization.registry import StructureRegistry
 from arkitekt.widgets import SearchWidget
-from mikro.api.schema import (
-    RepresentationFragment,
-    SampleFragment,
-    aexpand_representation,
-    aget_sample,
+from mikro.structures import (
+    Representation,
+    Sample,
 )
+from mikro_napari.api.structures import MultiScaleSample
 from mikro_napari.helpers.stage import StageHelper
 from arkitekt.messages.postman.provide.bounced_provide import BouncedProvideMessage
 from qtpy import QtWidgets
@@ -76,14 +75,6 @@ class ArkitektWidget(QtWidgets.QWidget):
 
         self.helper = StageHelper(napari_viewer)
 
-        self.structure_registry = StructureRegistry()
-        self.structure_registry.register_as_structure(
-            RepresentationFragment, "representation", expand=aexpand_representation
-        )
-        self.structure_registry.register_as_structure(
-            SampleFragment, "sample", expand=aget_sample
-        )
-
         self.magic_bar = NapariMagicBar(
             self.fakts, self.herre, self.agent, parent=self, darkMode=True
         )
@@ -138,7 +129,7 @@ class ArkitektWidget(QtWidgets.QWidget):
         self.layout.addWidget(self.magic_bar)
         self.setLayout(self.layout)
 
-    def really_show(self, rep: RepresentationFragment, stream: bool = True):
+    def really_show(self, rep: Representation, stream: bool = True):
         """Show Image
 
         Displays an Image on Napari
@@ -149,7 +140,7 @@ class ArkitektWidget(QtWidgets.QWidget):
         """
         return self.helper.open_as_layer(rep)
 
-    def really_show_list(self, reps: List[RepresentationFragment], stream: bool = True):
+    def really_show_list(self, reps: List[Representation], stream: bool = True):
         """Show Images
 
         Displays Images on Napari as a list
@@ -163,7 +154,7 @@ class ArkitektWidget(QtWidgets.QWidget):
             self.helper.open_as_layer(rep)
         return
 
-    def open_locs(self, rep: RepresentationFragment):
+    def open_locs(self, rep: Representation):
         """Open Localization
 
         Opens this Image with Localization data displayed
@@ -173,7 +164,7 @@ class ArkitektWidget(QtWidgets.QWidget):
         """
         return self.helper.open_with_localizations(rep)
 
-    def open_multiview(self, rep: RepresentationFragment):
+    def open_multiview(self, rep: Representation):
         """Open MultiView
 
         Opens this Image with multiview
@@ -183,7 +174,7 @@ class ArkitektWidget(QtWidgets.QWidget):
         """
         return self.helper.open_multiscale(rep)
 
-    def open_aside(self, reps: List[RepresentationFragment]):
+    def open_aside(self, reps: List[Representation]):
         """Tile Images
 
         Opens these images aside from another
@@ -193,7 +184,7 @@ class ArkitektWidget(QtWidgets.QWidget):
         """
         return self.helper.open_aside(reps)
 
-    def open_multisample(self, samples: List[SampleFragment], stream=False):
+    def open_multisample(self, samples: List[Sample], stream=False):
         """Open Samples
 
         Opens the initial dataset of a sample
@@ -203,7 +194,7 @@ class ArkitektWidget(QtWidgets.QWidget):
         """
         return self.helper.open_multisample(samples, stream=stream)
 
-    def open_sample(self, sample: SampleFragment, stream=True):
+    def open_sample(self, sample: MultiScaleSample, stream=True):
         """Open Sample
 
         Opens an sample and tries to marry all of the metadata
@@ -213,9 +204,7 @@ class ArkitektWidget(QtWidgets.QWidget):
         """
         return self.helper.open_sample(sample, stream=stream)
 
-    def upload(
-        self, name: str = None, sample: SampleFragment = None
-    ) -> RepresentationFragment:
+    def upload(self, name: str = None, sample: Sample = None) -> Representation:
         """Upload an Active Image
 
         Uploads the curently active image on Napari
