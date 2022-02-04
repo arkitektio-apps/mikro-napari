@@ -1,6 +1,6 @@
 from ast import Mult
 from typing import List
-from mikro_napari.api.schema import MultiScaleSampleFragment
+from mikro_napari.api.schema import MultiScaleSampleFragment, create_image
 from mikro_napari.api.structures import MultiScaleSample
 from napari.layers.image.image import Image
 from napari.layers.points.points import Points
@@ -22,7 +22,7 @@ from mikro.api.schema import (
     RepresentationFragment,
 )
 
-from mikro.array import Array
+from mikro.mixins import Array
 
 logger = logging.getLogger(__name__)
 
@@ -255,6 +255,8 @@ class StageHelper(QObject):
 
         firstrep = sample.representations[0]
         firstrep.store
+
+        create_image()
 
         arrays = [
             rep.data

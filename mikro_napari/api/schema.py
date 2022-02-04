@@ -1,6 +1,6 @@
 from mikro.structure import Thumbnail
 from mikro.structure import Table
-from mikro.array import Array
+from mikro.mixins import Array
 from mikro.structure import Representation
 from mikro.structure import Experiment
 from mikro.structure import OmeroFile

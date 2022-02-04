@@ -62,6 +62,7 @@ class ArkitektWidget(QtWidgets.QWidget):
         # Different Grants
 
         self.beacon_grant = QtSelectableBeaconGrant(parent=self)
+
         self.fakts = QtFakts(
             grants=[self.beacon_grant],
             subapp="napari",
