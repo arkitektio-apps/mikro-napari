@@ -1,5 +1,4 @@
 from typing import List
-from arkitekt.serialization.registry import StructureRegistry
 from arkitekt.widgets import SearchWidget
 from mikro.structures import (
     Representation,
@@ -72,58 +71,11 @@ class ArkitektWidget(QtWidgets.QWidget):
             parent=self,
         )
         self.herre = QtHerre()
-        self.agent = QtAgent(self)
 
         self.helper = StageHelper(napari_viewer)
 
         self.magic_bar = NapariMagicBar(
             self.fakts, self.herre, self.agent, parent=self, darkMode=True
-        )
-
-        self.agent.register_side(
-            self.really_show,
-            widgets={"rep": MY_TOP_REPRESENTATIONS},
-            interfaces=["show"],
-            on_assign=self.really_show,
-        )
-        self.agent.register_side(
-            self.really_show_list,
-            widgets={"reps": MY_TOP_REPRESENTATIONS},
-            interfaces=["show"],
-            on_assign=self.really_show_list,
-        )
-        self.agent.register_side(
-            self.upload, widgets={"sample": MY_TOP_SAMPLES}, on_assign=self.upload
-        )
-
-        self.agent.register_side(
-            self.open_sample,
-            widgets={"sample": MY_TOP_SAMPLES},
-            on_assign=self.open_sample,
-        )
-
-        self.agent.register_side(
-            self.open_multisample,
-            widgets={"samples": MY_TOP_SAMPLES},
-            on_assign=self.open_multisample,
-        )
-
-        self.agent.register_side(
-            self.open_locs,
-            widgets={"rep": SMLM_REPRESENTATIONS},
-            on_assign=self.open_locs,
-        )
-
-        self.agent.register_side(
-            self.open_aside,
-            widgets={"reps": MY_TOP_REPRESENTATIONS},
-            on_assign=self.open_aside,
-        )
-
-        self.agent.register_side(
-            self.open_multiview,
-            widgets={"rep": MULTISCALE_REPRESENTATIONS},
-            on_assign=self.open_multiview,
         )
 
         self.layout = QtWidgets.QVBoxLayout()
