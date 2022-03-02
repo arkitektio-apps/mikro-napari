@@ -1,11 +1,11 @@
-from mikro.funcs import aexecute, subscribe, asubscribe, execute
-from mikro.scalars import XArray, Store
-from enum import Enum
-from typing import Dict, Iterator, AsyncIterator, Optional, List, Literal
-from pydantic import Field, BaseModel
-from mikro.traits import Representation, Sample
-from turms.types.object import GraphQLObject
+from mikro.traits import Sample, Representation
 from mikro.mikro import Mikro
+from mikro.funcs import subscribe, aexecute, asubscribe, execute
+from mikro.scalars import Store, XArray
+from typing import Literal, Iterator, Optional, AsyncIterator, List, Dict
+from enum import Enum
+from pydantic import BaseModel, Field
+from turms.types.object import GraphQLObject
 
 
 class OmeroFileType(str, Enum):
@@ -155,6 +155,61 @@ class MultiScaleRepresentationFragment(Representation, GraphQLObject):
         frozen = True
 
 
+class RepresentationFragmentSample(Sample, GraphQLObject):
+    """Samples are storage containers for representations. A Sample is to be understood analogous to a Biological Sample. It existed in Time (the time of acquisiton and experimental procedure),
+    was measured in space (x,y,z) and in different modalities (c). Sample therefore provide a datacontainer where each Representation of
+    the data shares the same dimensions. Every transaction to our image data is still part of the original acuqistion, so also filtered images are refering back to the sample
+    """
+
+    typename: Optional[Literal["Sample"]] = Field(alias="__typename")
+    name: str
+
+    class Config:
+        frozen = True
+
+
+class RepresentationFragment(Representation, GraphQLObject):
+    typename: Optional[Literal["Representation"]] = Field(alias="__typename")
+    sample: Optional[RepresentationFragmentSample]
+    "The Sample this representation belongs to"
+    type: Optional[str]
+    "The Representation can have varying types, consult your API"
+    id: str
+    store: Optional[Store]
+    variety: RepresentationVariety
+    "The Representation can have varying types, consult your API"
+    name: Optional[str]
+    "Cleartext name"
+
+    class Config:
+        frozen = True
+
+
+class ListRepresentationFragmentSample(Sample, GraphQLObject):
+    """Samples are storage containers for representations. A Sample is to be understood analogous to a Biological Sample. It existed in Time (the time of acquisiton and experimental procedure),
+    was measured in space (x,y,z) and in different modalities (c). Sample therefore provide a datacontainer where each Representation of
+    the data shares the same dimensions. Every transaction to our image data is still part of the original acuqistion, so also filtered images are refering back to the sample
+    """
+
+    typename: Optional[Literal["Sample"]] = Field(alias="__typename")
+    name: str
+
+    class Config:
+        frozen = True
+
+
+class ListRepresentationFragment(Representation, GraphQLObject):
+    typename: Optional[Literal["Representation"]] = Field(alias="__typename")
+    id: str
+    name: Optional[str]
+    "Cleartext name"
+    sample: Optional[ListRepresentationFragmentSample]
+    "The Sample this representation belongs to"
+
+    class Config:
+        frozen = True
+
+
 class ROIFragmentVectors(GraphQLObject):
     typename: Optional[Literal["Vector"]] = Field(alias="__typename")
     x: Optional[float]
@@ -249,6 +304,28 @@ class Get_multiscale_repQuery(GraphQLObject):
     class Meta:
         domain = "napari"
         document = 'fragment MultiScaleRepresentation on Representation {\n  derived(tags: ["multiscale"]) {\n    name\n    tags\n    meta\n    store\n  }\n}\n\nquery get_multiscale_rep($id: ID!) {\n  representation(id: $id) {\n    ...MultiScaleRepresentation\n  }\n}'
+
+    class Config:
+        frozen = True
+
+
+class Get_representationQuery(GraphQLObject):
+    representation: Optional[RepresentationFragment]
+
+    class Meta:
+        domain = "napari"
+        document = "fragment Representation on Representation {\n  sample {\n    name\n  }\n  type\n  id\n  store\n  variety\n  name\n}\n\nquery get_representation($id: ID!) {\n  representation(id: $id) {\n    ...Representation\n  }\n}"
+
+    class Config:
+        frozen = True
+
+
+class Get_some_representationsQuery(GraphQLObject):
+    representations: Optional[List[Optional[ListRepresentationFragment]]]
+
+    class Meta:
+        domain = "napari"
+        document = 'fragment ListRepresentation on Representation {\n  id\n  name\n  sample {\n    name\n  }\n}\n\nquery get_some_representations {\n  representations(limit: 10, order: "-created_at") {\n    ...ListRepresentation\n  }\n}'
 
     class Config:
         frozen = True
@@ -433,6 +510,66 @@ def get_multiscale_rep(
     Returns:
         MultiScaleRepresentationFragment: The returned Mutation"""
     return execute(Get_multiscale_repQuery, {"id": id}, mikro=mikro).representation
+
+
+async def aget_representation(id: str, mikro: Mikro = None) -> RepresentationFragment:
+    """get_representation
+
+    Get a single representation by ID
+
+    Arguments:
+        id (ID): ID
+        mikro (mikro.mikro.Mikro): The mikro client
+
+    Returns:
+        RepresentationFragment: The returned Mutation"""
+    return (
+        await aexecute(Get_representationQuery, {"id": id}, mikro=mikro)
+    ).representation
+
+
+def get_representation(id: str, mikro: Mikro = None) -> RepresentationFragment:
+    """get_representation
+
+    Get a single representation by ID
+
+    Arguments:
+        id (ID): ID
+        mikro (mikro.mikro.Mikro): The mikro client
+
+    Returns:
+        RepresentationFragment: The returned Mutation"""
+    return execute(Get_representationQuery, {"id": id}, mikro=mikro).representation
+
+
+async def aget_some_representations(
+    mikro: Mikro = None,
+) -> List[ListRepresentationFragment]:
+    """get_some_representations
+
+    All represetations
+
+    Arguments:
+        mikro (mikro.mikro.Mikro): The mikro client
+
+    Returns:
+        ListRepresentationFragment: The returned Mutation"""
+    return (
+        await aexecute(Get_some_representationsQuery, {}, mikro=mikro)
+    ).representations
+
+
+def get_some_representations(mikro: Mikro = None) -> List[ListRepresentationFragment]:
+    """get_some_representations
+
+    All represetations
+
+    Arguments:
+        mikro (mikro.mikro.Mikro): The mikro client
+
+    Returns:
+        ListRepresentationFragment: The returned Mutation"""
+    return execute(Get_some_representationsQuery, {}, mikro=mikro).representations
 
 
 async def aget_rois(
