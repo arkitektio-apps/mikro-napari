@@ -9,6 +9,11 @@ structure_reg.register_as_structure(
     expand=aexpand_multiscale,
 )
 
+structure_reg.register_as_structure(
+    RepresentationFragment,
+    expand=aget_representation,
+)
+
 
 structure_reg.register_as_structure(
     MultiScaleRepresentationFragment, expand=aget_multiscale_rep

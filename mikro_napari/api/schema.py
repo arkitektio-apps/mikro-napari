@@ -1,11 +1,11 @@
-from mikro.traits import Sample, Representation
-from mikro.mikro import Mikro
-from mikro.funcs import subscribe, aexecute, asubscribe, execute
-from mikro.scalars import Store, XArray
-from typing import Literal, Iterator, Optional, AsyncIterator, List, Dict
 from enum import Enum
-from pydantic import BaseModel, Field
+from mikro.scalars import XArray, Store
+from typing import Optional, Dict, Iterator, Literal, List, AsyncIterator
+from pydantic import Field, BaseModel
+from mikro.mikro import MikroRath
 from turms.types.object import GraphQLObject
+from mikro.funcs import execute, asubscribe, subscribe, aexecute
+from mikro.traits import Sample, Representation
 
 
 class OmeroFileType(str, Enum):
@@ -479,7 +479,7 @@ class Create_imageMutation(GraphQLObject):
 
 
 async def aget_multiscale_rep(
-    id: str, mikro: Mikro = None
+    id: str, mikrorath: MikroRath = None, as_task: bool = False
 ) -> MultiScaleRepresentationFragment:
     """get_multiscale_rep
 
@@ -487,17 +487,20 @@ async def aget_multiscale_rep(
 
     Arguments:
         id (ID): ID
-        mikro (mikro.mikro.Mikro): The mikro client
+        mikrorath (mikro.mikro.MikroRath): The mikro rath client
+        as_task (bool): Should we return a task
 
     Returns:
         MultiScaleRepresentationFragment: The returned Mutation"""
     return (
-        await aexecute(Get_multiscale_repQuery, {"id": id}, mikro=mikro)
+        await aexecute(
+            Get_multiscale_repQuery, {"id": id}, mikrorath=mikrorath, as_task=as_task
+        )
     ).representation
 
 
 def get_multiscale_rep(
-    id: str, mikro: Mikro = None
+    id: str, mikrorath: MikroRath = None, as_task: bool = False
 ) -> MultiScaleRepresentationFragment:
     """get_multiscale_rep
 
@@ -505,75 +508,99 @@ def get_multiscale_rep(
 
     Arguments:
         id (ID): ID
-        mikro (mikro.mikro.Mikro): The mikro client
+        mikrorath (mikro.mikro.MikroRath): The mikro rath client
+        as_task (bool): Should we return a task
 
     Returns:
         MultiScaleRepresentationFragment: The returned Mutation"""
-    return execute(Get_multiscale_repQuery, {"id": id}, mikro=mikro).representation
+    return execute(
+        Get_multiscale_repQuery, {"id": id}, mikrorath=mikrorath, as_task=as_task
+    ).representation
 
 
-async def aget_representation(id: str, mikro: Mikro = None) -> RepresentationFragment:
+async def aget_representation(
+    id: str, mikrorath: MikroRath = None, as_task: bool = False
+) -> RepresentationFragment:
     """get_representation
 
     Get a single representation by ID
 
     Arguments:
         id (ID): ID
-        mikro (mikro.mikro.Mikro): The mikro client
+        mikrorath (mikro.mikro.MikroRath): The mikro rath client
+        as_task (bool): Should we return a task
 
     Returns:
         RepresentationFragment: The returned Mutation"""
     return (
-        await aexecute(Get_representationQuery, {"id": id}, mikro=mikro)
+        await aexecute(
+            Get_representationQuery, {"id": id}, mikrorath=mikrorath, as_task=as_task
+        )
     ).representation
 
 
-def get_representation(id: str, mikro: Mikro = None) -> RepresentationFragment:
+def get_representation(
+    id: str, mikrorath: MikroRath = None, as_task: bool = False
+) -> RepresentationFragment:
     """get_representation
 
     Get a single representation by ID
 
     Arguments:
         id (ID): ID
-        mikro (mikro.mikro.Mikro): The mikro client
+        mikrorath (mikro.mikro.MikroRath): The mikro rath client
+        as_task (bool): Should we return a task
 
     Returns:
         RepresentationFragment: The returned Mutation"""
-    return execute(Get_representationQuery, {"id": id}, mikro=mikro).representation
+    return execute(
+        Get_representationQuery, {"id": id}, mikrorath=mikrorath, as_task=as_task
+    ).representation
 
 
 async def aget_some_representations(
-    mikro: Mikro = None,
+    mikrorath: MikroRath = None, as_task: bool = False
 ) -> List[ListRepresentationFragment]:
     """get_some_representations
 
     All represetations
 
     Arguments:
-        mikro (mikro.mikro.Mikro): The mikro client
+        mikrorath (mikro.mikro.MikroRath): The mikro rath client
+        as_task (bool): Should we return a task
 
     Returns:
         ListRepresentationFragment: The returned Mutation"""
     return (
-        await aexecute(Get_some_representationsQuery, {}, mikro=mikro)
+        await aexecute(
+            Get_some_representationsQuery, {}, mikrorath=mikrorath, as_task=as_task
+        )
     ).representations
 
 
-def get_some_representations(mikro: Mikro = None) -> List[ListRepresentationFragment]:
+def get_some_representations(
+    mikrorath: MikroRath = None, as_task: bool = False
+) -> List[ListRepresentationFragment]:
     """get_some_representations
 
     All represetations
 
     Arguments:
-        mikro (mikro.mikro.Mikro): The mikro client
+        mikrorath (mikro.mikro.MikroRath): The mikro rath client
+        as_task (bool): Should we return a task
 
     Returns:
         ListRepresentationFragment: The returned Mutation"""
-    return execute(Get_some_representationsQuery, {}, mikro=mikro).representations
+    return execute(
+        Get_some_representationsQuery, {}, mikrorath=mikrorath, as_task=as_task
+    ).representations
 
 
 async def aget_rois(
-    representation: str, type: List[RoiTypeInput] = None, mikro: Mikro = None
+    representation: str,
+    type: List[RoiTypeInput] = None,
+    mikrorath: MikroRath = None,
+    as_task: bool = False,
 ) -> List[ROIFragment]:
     """get_rois
 
@@ -582,19 +609,26 @@ async def aget_rois(
     Arguments:
         representation (ID): ID
         type (List[RoiTypeInput], Optional): RoiTypeInput
-        mikro (mikro.mikro.Mikro): The mikro client
+        mikrorath (mikro.mikro.MikroRath): The mikro rath client
+        as_task (bool): Should we return a task
 
     Returns:
         ROIFragment: The returned Mutation"""
     return (
         await aexecute(
-            Get_roisQuery, {"representation": representation, "type": type}, mikro=mikro
+            Get_roisQuery,
+            {"representation": representation, "type": type},
+            mikrorath=mikrorath,
+            as_task=as_task,
         )
     ).rois
 
 
 def get_rois(
-    representation: str, type: List[RoiTypeInput] = None, mikro: Mikro = None
+    representation: str,
+    type: List[RoiTypeInput] = None,
+    mikrorath: MikroRath = None,
+    as_task: bool = False,
 ) -> List[ROIFragment]:
     """get_rois
 
@@ -603,45 +637,61 @@ def get_rois(
     Arguments:
         representation (ID): ID
         type (List[RoiTypeInput], Optional): RoiTypeInput
-        mikro (mikro.mikro.Mikro): The mikro client
+        mikrorath (mikro.mikro.MikroRath): The mikro rath client
+        as_task (bool): Should we return a task
 
     Returns:
         ROIFragment: The returned Mutation"""
     return execute(
-        Get_roisQuery, {"representation": representation, "type": type}, mikro=mikro
+        Get_roisQuery,
+        {"representation": representation, "type": type},
+        mikrorath=mikrorath,
+        as_task=as_task,
     ).rois
 
 
-async def aexpand_multiscale(id: str, mikro: Mikro = None) -> MultiScaleSampleFragment:
+async def aexpand_multiscale(
+    id: str, mikrorath: MikroRath = None, as_task: bool = False
+) -> MultiScaleSampleFragment:
     """expand_multiscale
 
     Get a single representation by ID
 
     Arguments:
         id (ID): ID
-        mikro (mikro.mikro.Mikro): The mikro client
+        mikrorath (mikro.mikro.MikroRath): The mikro rath client
+        as_task (bool): Should we return a task
 
     Returns:
         MultiScaleSampleFragment: The returned Mutation"""
-    return (await aexecute(Expand_multiscaleQuery, {"id": id}, mikro=mikro)).sample
+    return (
+        await aexecute(
+            Expand_multiscaleQuery, {"id": id}, mikrorath=mikrorath, as_task=as_task
+        )
+    ).sample
 
 
-def expand_multiscale(id: str, mikro: Mikro = None) -> MultiScaleSampleFragment:
+def expand_multiscale(
+    id: str, mikrorath: MikroRath = None, as_task: bool = False
+) -> MultiScaleSampleFragment:
     """expand_multiscale
 
     Get a single representation by ID
 
     Arguments:
         id (ID): ID
-        mikro (mikro.mikro.Mikro): The mikro client
+        mikrorath (mikro.mikro.MikroRath): The mikro rath client
+        as_task (bool): Should we return a task
 
     Returns:
         MultiScaleSampleFragment: The returned Mutation"""
-    return execute(Expand_multiscaleQuery, {"id": id}, mikro=mikro).sample
+    return execute(
+        Expand_multiscaleQuery, {"id": id}, mikrorath=mikrorath, as_task=as_task
+    ).sample
 
 
 async def awatch_rois(
-    representation: str, mikro: Mikro = None
+    representation: str, mikrorath: MikroRath = None, as_task: bool = False
 ) -> AsyncIterator[Watch_roisSubscriptionRois]:
     """watch_rois
 
@@ -649,18 +699,22 @@ async def awatch_rois(
 
     Arguments:
         representation (ID): ID
-        mikro (mikro.mikro.Mikro): The mikro client
+        mikrorath (mikro.mikro.MikroRath): The mikro rath client
+        as_task (bool): Should we return a task
 
     Returns:
         Watch_roisSubscriptionRois: The returned Mutation"""
     async for event in asubscribe(
-        Watch_roisSubscription, {"representation": representation}, mikro=mikro
+        Watch_roisSubscription,
+        {"representation": representation},
+        mikrorath=mikrorath,
+        as_task=as_task,
     ):
         yield event.rois
 
 
 def watch_rois(
-    representation: str, mikro: Mikro = None
+    representation: str, mikrorath: MikroRath = None, as_task: bool = False
 ) -> Iterator[Watch_roisSubscriptionRois]:
     """watch_rois
 
@@ -668,12 +722,16 @@ def watch_rois(
 
     Arguments:
         representation (ID): ID
-        mikro (mikro.mikro.Mikro): The mikro client
+        mikrorath (mikro.mikro.MikroRath): The mikro rath client
+        as_task (bool): Should we return a task
 
     Returns:
         Watch_roisSubscriptionRois: The returned Mutation"""
     for event in subscribe(
-        Watch_roisSubscription, {"representation": representation}, mikro=mikro
+        Watch_roisSubscription,
+        {"representation": representation},
+        mikrorath=mikrorath,
+        as_task=as_task,
     ):
         yield event.rois
 
@@ -683,7 +741,8 @@ async def acreate_roi(
     vectors: List[InputVector],
     creator: str = None,
     type: RoiTypeInput = None,
-    mikro: Mikro = None,
+    mikrorath: MikroRath = None,
+    as_task: bool = False,
 ) -> ROIFragment:
     """create_roi
 
@@ -694,7 +753,8 @@ async def acreate_roi(
         vectors (List[InputVector]): InputVector
         creator (ID, Optional): ID
         type (RoiTypeInput, Optional): RoiTypeInput
-        mikro (mikro.mikro.Mikro): The mikro client
+        mikrorath (mikro.mikro.MikroRath): The mikro rath client
+        as_task (bool): Should we return a task
 
     Returns:
         ROIFragment: The returned Mutation"""
@@ -707,7 +767,8 @@ async def acreate_roi(
                 "creator": creator,
                 "type": type,
             },
-            mikro=mikro,
+            mikrorath=mikrorath,
+            as_task=as_task,
         )
     ).createROI
 
@@ -717,7 +778,8 @@ def create_roi(
     vectors: List[InputVector],
     creator: str = None,
     type: RoiTypeInput = None,
-    mikro: Mikro = None,
+    mikrorath: MikroRath = None,
+    as_task: bool = False,
 ) -> ROIFragment:
     """create_roi
 
@@ -728,7 +790,8 @@ def create_roi(
         vectors (List[InputVector]): InputVector
         creator (ID, Optional): ID
         type (RoiTypeInput, Optional): RoiTypeInput
-        mikro (mikro.mikro.Mikro): The mikro client
+        mikrorath (mikro.mikro.MikroRath): The mikro rath client
+        as_task (bool): Should we return a task
 
     Returns:
         ROIFragment: The returned Mutation"""
@@ -740,39 +803,54 @@ def create_roi(
             "creator": creator,
             "type": type,
         },
-        mikro=mikro,
+        mikrorath=mikrorath,
+        as_task=as_task,
     ).createROI
 
 
-async def adelete_roi(id: str, mikro: Mikro = None) -> Delete_roiMutationDeleteroi:
+async def adelete_roi(
+    id: str, mikrorath: MikroRath = None, as_task: bool = False
+) -> Delete_roiMutationDeleteroi:
     """delete_roi
 
     Create an experiment (only signed in users)
 
     Arguments:
         id (ID): ID
-        mikro (mikro.mikro.Mikro): The mikro client
+        mikrorath (mikro.mikro.MikroRath): The mikro rath client
+        as_task (bool): Should we return a task
 
     Returns:
         Delete_roiMutationDeleteroi: The returned Mutation"""
-    return (await aexecute(Delete_roiMutation, {"id": id}, mikro=mikro)).deleteROI
+    return (
+        await aexecute(
+            Delete_roiMutation, {"id": id}, mikrorath=mikrorath, as_task=as_task
+        )
+    ).deleteROI
 
 
-def delete_roi(id: str, mikro: Mikro = None) -> Delete_roiMutationDeleteroi:
+def delete_roi(
+    id: str, mikrorath: MikroRath = None, as_task: bool = False
+) -> Delete_roiMutationDeleteroi:
     """delete_roi
 
     Create an experiment (only signed in users)
 
     Arguments:
         id (ID): ID
-        mikro (mikro.mikro.Mikro): The mikro client
+        mikrorath (mikro.mikro.MikroRath): The mikro rath client
+        as_task (bool): Should we return a task
 
     Returns:
         Delete_roiMutationDeleteroi: The returned Mutation"""
-    return execute(Delete_roiMutation, {"id": id}, mikro=mikro).deleteROI
+    return execute(
+        Delete_roiMutation, {"id": id}, mikrorath=mikrorath, as_task=as_task
+    ).deleteROI
 
 
-async def acreate_image(xarray: XArray, mikro: Mikro = None) -> Create_imageMutation:
+async def acreate_image(
+    xarray: XArray, mikrorath: MikroRath = None, as_task: bool = False
+) -> Create_imageMutation:
     """create_image
 
 
@@ -781,14 +859,19 @@ async def acreate_image(xarray: XArray, mikro: Mikro = None) -> Create_imageMuta
 
     Arguments:
         xarray (XArray): XArray
-        mikro (mikro.mikro.Mikro): The mikro client
+        mikrorath (mikro.mikro.MikroRath): The mikro rath client
+        as_task (bool): Should we return a task
 
     Returns:
         Create_imageMutation: The returned Mutation"""
-    return await aexecute(Create_imageMutation, {"xarray": xarray}, mikro=mikro)
+    return await aexecute(
+        Create_imageMutation, {"xarray": xarray}, mikrorath=mikrorath, as_task=as_task
+    )
 
 
-def create_image(xarray: XArray, mikro: Mikro = None) -> Create_imageMutation:
+def create_image(
+    xarray: XArray, mikrorath: MikroRath = None, as_task: bool = False
+) -> Create_imageMutation:
     """create_image
 
 
@@ -797,8 +880,11 @@ def create_image(xarray: XArray, mikro: Mikro = None) -> Create_imageMutation:
 
     Arguments:
         xarray (XArray): XArray
-        mikro (mikro.mikro.Mikro): The mikro client
+        mikrorath (mikro.mikro.MikroRath): The mikro rath client
+        as_task (bool): Should we return a task
 
     Returns:
         Create_imageMutation: The returned Mutation"""
-    return execute(Create_imageMutation, {"xarray": xarray}, mikro=mikro)
+    return execute(
+        Create_imageMutation, {"xarray": xarray}, mikrorath=mikrorath, as_task=as_task
+    )
