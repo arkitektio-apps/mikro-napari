@@ -1,34 +1,26 @@
 from typing import List
+
+import napari
+from arkitekt.compositions.base import Arkitekt
+from arkitekt.structures.registry import StructureRegistry
 from arkitekt.widgets import SearchWidget
-from mikro.structures import (
-    Representation,
-    Sample,
+from fakts.fakts import Fakts
+from koil.qt import QtRunner
+from mikro_napari.api.schema import (
+    ROIFragment,
+    RepresentationFragment,
+    aget_representation,
 )
-from mikro_napari.api.structures import MultiScaleSample
-from mikro_napari.helpers.stage import StageHelper
-from arkitekt.messages.postman.provide.bounced_provide import BouncedProvideMessage
 from qtpy import QtWidgets
-from mikro.widgets import MY_TOP_REPRESENTATIONS, MY_TOP_SAMPLES
-from arkitekt.qt.agent import QtAgent
-from arkitekt.qt.widgets.magic_bar import MagicBar
-from arkitekt.qt.widgets.settings_popup import SettingsPopup
-from arkitekt.qt.widgets.provisions import ProvisionsWidget
-from arkitekt.qt.widgets.templates import TemplatesWidget
-from herre.qt import QtHerre
-from fakts.qt import QtFakts
-from fakts.grants.qt.qtbeacon import QtSelectableBeaconGrant
-
-
-class NapariSettings(SettingsPopup):
-    def __init__(self, magic_bar, *args, **kwargs):
-        super().__init__(magic_bar, *args, **kwargs)
-        self.layout.addWidget(ProvisionsWidget(magic_bar.agent))
-        self.layout.addWidget(TemplatesWidget(magic_bar.agent))
-
-
-class NapariMagicBar(MagicBar):
-    settingsPopupClass = NapariSettings
-
+from fakts.grants.qt.qtbeacon import QtSelectableBeaconGrant, SelectBeaconWidget
+from qtpy import QtCore
+from mikro.arkitekt import ConnectedApp
+from koil.composition.qt import QtPedanticKoil
+from herre.fakts import FaktsHerre
+from arkitekt.qt.magic_bar import MagicBar
+from arkitekt.qt.builders import QtInLoopBuilder
+from mikro_napari.models.representation import RepresentationQtModel
+from mikro_napari.widgets.dialogs.open_image import OpenImageDialog
 
 SMLM_REPRESENTATIONS = SearchWidget(
     query="""
@@ -53,120 +45,71 @@ MULTISCALE_REPRESENTATIONS = SearchWidget(
         """
 )
 
+stregistry = StructureRegistry()
 
-class ArkitektWidget(QtWidgets.QWidget):
-    def __init__(self, napari_viewer, *args, parent=None, **kwargs) -> None:
-        super().__init__(*args, **kwargs, parent=parent)
 
-        # Different Grants
+stregistry.register_as_structure(
+    RepresentationFragment, "representation", aget_representation
+)
 
-        self.beacon_grant = QtSelectableBeaconGrant(parent=self)
 
-        self.fakts = QtFakts(
-            grants=[self.beacon_grant],
-            subapp="napari",
-            hard_fakts={
-                "herre": {"client_id": "go8CAE78FDf4eLsOSk4wkR4usYbsamcq0yTYqBiY"}
-            },
-            parent=self,
+class MikroNapariWidget(QtWidgets.QWidget):
+    emit_image: QtCore.Signal = QtCore.Signal(object)
+
+    def __init__(self, viewer: napari.Viewer, *args, **kwargs):
+        super(MikroNapariWidget, self).__init__(*args, **kwargs)
+        self.viewer = viewer
+
+        self.app = ConnectedApp(
+            koil=QtPedanticKoil(uvify=False, auto_connect=True, parent=self),
+            arkitekt=Arkitekt(structure_registry=stregistry),
+            fakts=Fakts(
+                subapp="napari",
+                grants=[
+                    QtSelectableBeaconGrant(widget=SelectBeaconWidget(parent=self))
+                ],
+                assert_groups={"mikro"},
+            ),
+            herre=FaktsHerre(login_on_enter=False),
         )
-        self.herre = QtHerre()
+        self.app.koil.connect()
 
-        self.helper = StageHelper(napari_viewer)
+        self.magic_bar = MagicBar(self.app, dark_mode=True)
 
-        self.magic_bar = NapariMagicBar(
-            self.fakts, self.herre, self.agent, parent=self, darkMode=True
-        )
+        self.representation_controller = RepresentationQtModel(self.app, self.viewer)
+
+        self.task = None
+        self.stask = None
+
+        self.open_image = QtWidgets.QPushButton("Open Image")
+        self.open_image.clicked.connect(self.cause_image_load)
+
+        self.upload_image = QtWidgets.QPushButton("Upload Image")
+        self.upload_image.clicked.connect(self.cause_upload)
 
         self.layout = QtWidgets.QVBoxLayout()
+        self.layout.addWidget(self.open_image)
+        self.layout.addWidget(self.upload_image)
         self.layout.addWidget(self.magic_bar)
+
+        self.setWindowTitle("My Own Title")
         self.setLayout(self.layout)
 
-    def really_show(self, rep: Representation, stream: bool = True):
-        """Show Image
+        self.app.arkitekt.register(builder=QtInLoopBuilder)(
+            self.representation_controller.on_image_loaded
+        )
 
-        Displays an Image on Napari
+    def cause_upload(self):
+        active_layers = [layer for layer in self.viewer.layers if layer.active]
 
-        Args:
-            rep (Representation): The image you want to display
-            stream (bool, optional): Do you want to stream the image or download it?
-        """
-        return self.helper.open_as_layer(rep)
+    def cause_image_load(self):
 
-    def really_show_list(self, reps: List[Representation], stream: bool = True):
-        """Show Images
+        rep_dialog = OpenImageDialog(self)
+        x = rep_dialog.exec()
+        if x:
+            self.representation_controller.active_representation = (
+                rep_dialog.selected_representation
+            )
 
-        Displays Images on Napari as a list
-
-        Args:
-            reps (Representation): The image you want to display
-            stream (bool, optional): Do you want to stream the image or download it?
-        """
-        print(reps)
-        for rep in reps:
-            self.helper.open_as_layer(rep)
-        return
-
-    def open_locs(self, rep: Representation):
-        """Open Localization
-
-        Opens this Image with Localization data displayed
-
-        Args:
-            rep (Representation): The image you want to display
-        """
-        return self.helper.open_with_localizations(rep)
-
-    def open_multiview(self, rep: Representation):
-        """Open MultiView
-
-        Opens this Image with multiview
-
-        Args:
-            rep (Representation): The image you want to display
-        """
-        return self.helper.open_multiscale(rep)
-
-    def open_aside(self, reps: List[Representation]):
-        """Tile Images
-
-        Opens these images aside from another
-
-        Args:
-            rep (Representation): The image you want to display
-        """
-        return self.helper.open_aside(reps)
-
-    def open_multisample(self, samples: List[Sample], stream=False):
-        """Open Samples
-
-        Opens the initial dataset of a sample
-
-        Args:
-            samples (List[Sample]): The samples you want to display
-        """
-        return self.helper.open_multisample(samples, stream=stream)
-
-    def open_sample(self, sample: MultiScaleSample, stream=True):
-        """Open Sample
-
-        Opens an sample and tries to marry all of the metadata
-
-        Args:
-            sample (Sample): The image you want to display
-        """
-        return self.helper.open_sample(sample, stream=stream)
-
-    def upload(self, name: str = None, sample: Sample = None) -> Representation:
-        """Upload an Active Image
-
-        Uploads the curently active image on Napari
-
-        Args:
-            name (str, optional): How do you want to name the image?
-            sample (Sample, optional): Which sample should we put the new image in?
-
-        Returns:
-            Representation: The uploaded image from the app
-        """
-        return self.helper.upload_everything(image_name=name, sample=sample)
+    def on_error(self, error):
+        print(error)

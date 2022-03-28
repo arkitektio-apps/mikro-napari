@@ -1,5 +1,5 @@
 import contextlib
-from mikro_napari.widgets.main_widget import ArkitektWidget
+from mikro_napari.widgets.main_widget import MikroNapariWidget
 
 import napari
 import numpy as np
@@ -8,8 +8,8 @@ import argparse
 
 def main(**kwargs):
     viewer = napari.Viewer()
-    widget = ArkitektWidget(viewer, **kwargs)
-    viewer.window.add_dock_widget(widget, area="left", name="Arkitekt")
+    widget = MikroNapariWidget(viewer, **kwargs)
+    viewer.window.add_dock_widget(widget, area="left", name="Mikro")
     napari.run()
 
 
