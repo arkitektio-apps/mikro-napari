@@ -100,7 +100,8 @@ class MikroNapariWidget(QtWidgets.QWidget):
         )
 
     def cause_upload(self):
-        active_layers = [layer for layer in self.viewer.layers if layer.active]
+        with open("napi.json", "w") as f:
+            f.write(self.app.json(exclude_none=True, indent=4))
 
     def cause_image_load(self):
 

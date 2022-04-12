@@ -1,10 +1,10 @@
-from typing import Literal, AsyncIterator, Iterator, Dict, Optional, List
-from pydantic import Field, BaseModel
-from mikro.funcs import asubscribe, execute, aexecute, subscribe
 from mikro.scalars import XArray, Store
-from mikro.traits import ROI, Vectorizable, Representation, Sample
-from rath.scalars import ID
+from mikro.traits import Vectorizable, Representation, Sample, ROI
+from mikro.funcs import aexecute, execute, asubscribe, subscribe
+from pydantic import BaseModel, Field
 from enum import Enum
+from typing import List, Literal, AsyncIterator, Optional, Iterator, Dict
+from rath.scalars import ID
 from mikro.rath import MikroRath
 
 
@@ -125,7 +125,7 @@ class InputVector(BaseModel, Vectorizable):
     "Z-coordinate"
 
 
-OmeroRepresentationInput.update_forward_refs()
+PhysicalSizeInput.update_forward_refs()
 
 
 class DetailLabelFragmentFeatures(BaseModel):
