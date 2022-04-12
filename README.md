@@ -9,6 +9,7 @@
 
 mikro napari enables napari on the mikro/arkitekt platform
 
+# DEVELOPMENT
 
 ## Idea
 

@@ -23,6 +23,8 @@ pytest-cov = "^3.0.0"
 black = "^21.12b0"
 napari = "^0.4.15"
 PyQt5 = "^5.15.6"
+testcontainers = "^3.5.3"
+pydoc-markdown = "4.5.0"
 
 [tool.poetry.plugins."napari.plugin"]
 mikro-napari  = "mikro_napari.plugin"
@@ -34,6 +36,8 @@ search_path = [ "mikro_napari" ]
 
 [tool.pydoc-markdown.renderer]
 type = "docusaurus"
+docs_base_path = "website/docs"
+
 
 [tool.pytest.ini_options]
 qt_api="pyqt5"
