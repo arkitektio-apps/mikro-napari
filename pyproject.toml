@@ -21,6 +21,8 @@ pytest = "^6.2.5"
 pytest-aiohttp = "^0.3.0"
 pytest-cov = "^3.0.0"
 black = "^21.12b0"
+napari = "^0.4.15"
+PyQt5 = "^5.15.6"
 
 [tool.poetry.plugins."napari.plugin"]
 mikro-napari  = "mikro_napari.plugin"
@@ -32,6 +34,13 @@ search_path = [ "mikro_napari" ]
 
 [tool.pydoc-markdown.renderer]
 type = "docusaurus"
+
+[tool.pytest.ini_options]
+qt_api="pyqt5"
+markers = [
+    "integration: marks tests that require a running server",
+    "qt: marks tests that require a running qt application",
+]
 
 
 [build-system]
