@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkwebsite=self.webpackChunkwebsite||[]).push([[39],{6917:function(a){a.exports=JSON.parse('{"rath":{"allTagsPath":"/mikro-napari/blog/tags","name":"rath","count":1,"permalink":"/mikro-napari/blog/tags/rath"}}')}}]);
