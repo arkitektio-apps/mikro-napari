@@ -6,7 +6,6 @@ from mikro_napari.api.schema import (
     DetailLabelFragment,
     ROIFragment,
     RepresentationFragment,
-    ListRepresentationFragment,
     RepresentationVariety,
     RoiTypeInput,
     Watch_roisSubscriptionRois,

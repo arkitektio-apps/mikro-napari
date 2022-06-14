@@ -8,8 +8,8 @@ packages = [{include = "mikro_napari"}]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-arkitekt = "0.1.120"
-mikro = "0.1.74"
+arkitekt = "0.2.7"
+mikro = "0.2.4"
 napari-plugin_engine = "^0.1.4"
 
 

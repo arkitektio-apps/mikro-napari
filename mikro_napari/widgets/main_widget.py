@@ -1,18 +1,19 @@
-from typing import List
 
+from tracemalloc import Statistic
 import napari
 from arkitekt.compositions.base import Arkitekt
 from arkitekt.structures.registry import StructureRegistry
 from arkitekt.widgets import SearchWidget
 from fakts.fakts import Fakts
-from koil.qt import QtRunner
+from fakts.grants.meta.failsafe import FailsafeGrant
+from fakts.grants.remote.claim import ClaimGrant
+from fakts.grants.remote.public_redirect_grant import PublicRedirectGrant
+from mikro.api.schema import Search_representationQuery
 from mikro_napari.api.schema import (
-    ROIFragment,
     RepresentationFragment,
     aget_representation,
 )
 from qtpy import QtWidgets
-from fakts.grants.qt.qtbeacon import QtSelectableBeaconGrant, SelectBeaconWidget
 from qtpy import QtCore
 from mikro.arkitekt import ConnectedApp
 from koil.composition.qt import QtPedanticKoil
@@ -21,16 +22,17 @@ from arkitekt.qt.magic_bar import MagicBar
 from arkitekt.qt.builders import QtInLoopBuilder
 from mikro_napari.models.representation import RepresentationQtModel
 from mikro_napari.widgets.dialogs.open_image import OpenImageDialog
+from fakts.grants.remote.base import StaticDiscovery
 
 SMLM_REPRESENTATIONS = SearchWidget(
     query="""
-                    query Search($search: String){
-                        options: representations(name: $search, tags: ["smlm"]){
-                            value: id
-                            label: name
-                        }
-                    }
-                    """
+    query Search($search: String){
+        options: representations(name: $search, tags: ["smlm"]){
+            value: id
+            label: name
+        }
+    }
+    """
 )  #
 
 
@@ -49,7 +51,10 @@ stregistry = StructureRegistry()
 
 
 stregistry.register_as_structure(
-    RepresentationFragment, "representation", aget_representation
+    RepresentationFragment,
+    "representation",
+    aget_representation,
+    default_widget=SearchWidget(query=Search_representationQuery.Meta.document),
 )
 
 
@@ -61,18 +66,29 @@ class MikroNapariWidget(QtWidgets.QWidget):
         self.viewer = viewer
 
         self.app = ConnectedApp(
-            koil=QtPedanticKoil(uvify=False, auto_connect=True, parent=self),
+            koil=QtPedanticKoil(uvify=False, parent=self),
             arkitekt=Arkitekt(structure_registry=stregistry),
             fakts=Fakts(
                 subapp="napari",
-                grants=[
-                    QtSelectableBeaconGrant(widget=SelectBeaconWidget(parent=self))
-                ],
-                assert_groups={"mikro"},
+                grant=FailsafeGrant(
+                        grants=[
+                            ClaimGrant(
+                        client_id="DSNwVKbSmvKuIUln36FmpWNVE2KrbS2oRX0ke8PJ",
+                        client_secret="Gp3VldiWUmHgKkIxZjL2aEjVmNwnSyIGHWbQJo6bWMDoIUlBqvUyoGWUWAe6jI3KRXDOsD13gkYVCZR0po1BLFO9QT4lktKODHDs0GyyJEzmIjkpEOItfdCC4zIa3Qzu",
+                        discovery=StaticDiscovery(base_url="http://localhost:8019/f/"),
+                        graph="localhost",
+                        ),  
+                        PublicRedirectGrant(name="Napari", scopes=["openid"]),
+                    ]
+                ),
+                force_refresh=True,
+                assert_groups={"mikro", "arkitekt"},
             ),
-            herre=FaktsHerre(login_on_enter=False),
+            herre=FaktsHerre(),
         )
-        self.app.koil.connect()
+        self.viewer.window.app = self.app
+
+        self.app.enter()
 
         self.magic_bar = MagicBar(self.app, dark_mode=True)
 
