@@ -145,3 +145,7 @@ media
 export
 static_collected
 data
+
+*.token.temp
+*.fakts.yaml
+fakts.yaml
