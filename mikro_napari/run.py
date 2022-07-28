@@ -2,12 +2,14 @@ from mikro_napari.widgets.main_widget import MikroNapariWidget
 
 import napari
 import argparse
+from skimage.data import astronaut
 
 
 def main(**kwargs):
     viewer = napari.Viewer()
     widget = MikroNapariWidget(viewer, **kwargs)
     viewer.window.add_dock_widget(widget, area="left", name="Mikro")
+    # viewer.add_image(astronaut(), name="astronaut")
     napari.run()
 
 

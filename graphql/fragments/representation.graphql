@@ -17,6 +17,9 @@ fragment Representation on Representation {
   store
   variety
   name
+  omero {
+    scale
+  }
 }
 
 fragment ListRepresentation on Representation {

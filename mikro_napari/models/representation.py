@@ -1,4 +1,5 @@
 from typing import Dict, List, Optional
+from importlib_metadata import metadata
 from qtpy import QtCore
 from koil.qt import QtRunner, QtGeneratorRunner
 from mikro.api.schema import InputVector
@@ -9,6 +10,7 @@ from mikro_napari.api.schema import (
     RepresentationVariety,
     RoiTypeInput,
     Watch_roisSubscriptionRois,
+    acreate_roi,
     aget_label_for,
     aget_rois,
     awatch_rois,
@@ -33,9 +35,15 @@ class RepresentationQtModel(QtCore.QObject):
 
         self.get_rois_query = QtRunner(aget_rois)
         self.get_rois_query.returned.connect(self.on_rois_loaded)
+        self.get_rois_query.errored.connect(print)
+
+        self.create_rois_runner = QtRunner(acreate_roi)
+        self.create_rois_runner.returned.connect(print)
+        self.create_rois_runner.errored.connect(print)
 
         self.watch_rois_subscription = QtGeneratorRunner(awatch_rois)
         self.watch_rois_subscription.yielded.connect(self.on_rois_updated)
+        self.watch_rois_subscription.errored.connect(print)
 
         self.get_label_query = QtRunner(aget_label_for)
         self.get_label_query.returned.connect(self.on_label_loaded)
@@ -69,17 +77,37 @@ class RepresentationQtModel(QtCore.QObject):
         self._active_representation = value
 
         if self._image_layer:
-            self._image_layer.data = value.data.transpose(*list("tzxyc"))
+            del self._image_layer
+            self._image_layer = None
+
+        if self._roi_layer:
+            del self._roi_layer
+            self._roi_layer = None
+
+        scale = None
+
+        if value.omero:
+            if value.omero.scale:
+                scale = value.omero.scale
+
+        if value.variety == RepresentationVariety.RGB:
+            self._image_layer = self.viewer.add_image(
+                value.data.transpose(*list("tzxyc")),
+                metadata={"mikro": True, "representation": value, "type": "IMAGE"},
+                scale=scale,
+            )
         else:
             self._image_layer = self.viewer.add_image(
-                value.data.transpose(*list("tzxyc"))
+                value.data.transpose(*list("ctzxy")),
+                metadata={"mikro": True, "representation": value, "type": "IMAGE"},
+                scale=scale,
             )
-            self._image_layer.mouse_drag_callbacks.append(self.on_drag_image_layer)
 
-        self._image_layer.name = value.name
+        self._image_layer.mouse_drag_callbacks.append(self.on_drag_image_layer)
+        self._image_layer.name = f"{value.name} (ID: {value.id})"
 
     def on_image_loaded(self, rep: RepresentationFragment):
-        """Shows beauitful Images
+        """Show on Napari
 
         Loads the image into the viewer
 
@@ -87,6 +115,29 @@ class RepresentationQtModel(QtCore.QObject):
             rep (RepresentationFragment): The Image
         """
         self.active_representation = rep
+
+    def show_images(self, reps: List[RepresentationFragment]):
+        """Show Images on Napari
+
+        Loads the images into the viewer
+
+        Args:
+            reps (List[RepresentationFragment]): The Image
+        """
+        print("SHOWING IMAGES", reps)
+        for i in reps:
+            self.active_representation = i
+
+    def tile_images(self, reps: List[RepresentationFragment]):
+        """Show Images on Napari
+
+        Loads the images into the viewer
+
+        Args:
+            reps (List[RepresentationFragment]): The Image
+        """
+        for i in reps:
+            self.active_representation = i
 
     def on_label_loaded(self, label: DetailLabelFragment):
         """Shows beauitful Images
@@ -136,9 +187,13 @@ class RepresentationQtModel(QtCore.QObject):
 
         if layer.mode in DESIGN_MODE_MAP:
             if len(self._roi_layer.data) > len(self.roi_state.items()):
-                create_roi(
+                t, z, c = layer.position[:3]
+
+                self.create_rois_runner.run(
                     representation=self._active_representation.id,
-                    vectors=InputVector.list_from_numpyarray(self._roi_layer.data[-1]),
+                    vectors=InputVector.list_from_numpyarray(
+                        self._roi_layer.data[-1], t=t, z=z, c=c
+                    ),
                     type=DESIGN_MODE_MAP[layer.mode],
                 )
 
@@ -153,7 +208,13 @@ class RepresentationQtModel(QtCore.QObject):
 
         if not self._roi_layer:
 
-            self._roi_layer = self.viewer.add_shapes()
+            self._roi_layer = self.viewer.add_shapes(
+                metadata={
+                    "mikro": True,
+                    "type": "ROIS",
+                    "representation": self._active_representation,
+                }
+            )
             self._roi_layer.mouse_drag_callbacks.append(self.on_drag_roi_layer)
 
         self._roi_layer.data = []

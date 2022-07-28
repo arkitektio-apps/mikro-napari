@@ -1,11 +1,29 @@
+from mikro.funcs import asubscribe, execute, subscribe, aexecute
+from typing import Iterator, Literal, AsyncIterator, Dict, Optional, List
+from mikro.traits import Representation, Vectorizable, ROI
 from pydantic import Field, BaseModel
-from mikro.funcs import aexecute, execute, asubscribe, subscribe
-from enum import Enum
-from typing import AsyncIterator, Literal, Iterator, List, Optional, Dict
-from mikro.traits import Vectorizable, ROI, Representation
-from mikro.scalars import Store, ArrayInput
 from rath.scalars import ID
+from mikro.scalars import ArrayInput, Store
+from enum import Enum
 from mikro.rath import MikroRath
+
+
+class AvailableModels(str, Enum):
+    GRUNNLAG_ANIMAL = "GRUNNLAG_ANIMAL"
+    GRUNNLAG_EXPERIMENT = "GRUNNLAG_EXPERIMENT"
+    GRUNNLAG_EXPERIMENTALGROUP = "GRUNNLAG_EXPERIMENTALGROUP"
+    GRUNNLAG_REPRESENTATION = "GRUNNLAG_REPRESENTATION"
+    GRUNNLAG_THUMBNAIL = "GRUNNLAG_THUMBNAIL"
+    GRUNNLAG_SAMPLE = "GRUNNLAG_SAMPLE"
+    GRUNNLAG_ROI = "GRUNNLAG_ROI"
+    GRUNNLAG_OMEROFILE = "GRUNNLAG_OMEROFILE"
+    GRUNNLAG_METRIC = "GRUNNLAG_METRIC"
+    GRUNNLAG_ANTIBODY = "GRUNNLAG_ANTIBODY"
+    GRUNNLAG_USERMETA = "GRUNNLAG_USERMETA"
+    GRUNNLAG_LABEL = "GRUNNLAG_LABEL"
+    GRUNNLAG_SIZEFEATURE = "GRUNNLAG_SIZEFEATURE"
+    GRUNNLAG_COMMENT = "GRUNNLAG_COMMENT"
+    BORD_TABLE = "BORD_TABLE"
 
 
 class OmeroFileType(str, Enum):
@@ -123,15 +141,43 @@ class InputVector(BaseModel, Vectorizable):
     "Y-coordinate"
     z: Optional[float]
     "Z-coordinate"
+    c: Optional[float]
+    "C-coordinate"
+    t: Optional[float]
+    "T-coordinate"
+
+
+class GroupAssignmentInput(BaseModel):
+    permissions: List[Optional[str]]
+    group: ID
+
+
+class UserAssignmentInput(BaseModel):
+    permissions: List[Optional[str]]
+    user: str
+    "The user email"
+
+
+class DescendendInput(BaseModel):
+    children: Optional[List[Optional["DescendendInput"]]]
+    typename: Optional[str]
+    "The type of the descendent"
+    user: Optional[str]
+    "The user that is mentioned"
+    bold: Optional[bool]
+    "Is this a bold leaf?"
+    italic: Optional[bool]
+    "Is this a italic leaf?"
+    code: Optional[bool]
+    "Is this a code leaf?"
+    text: Optional[str]
+    "The text of the leaf"
 
 
 class DetailLabelFragmentFeatures(BaseModel):
     typename: Optional[Literal["SizeFeature"]] = Field(alias="__typename")
     id: ID
     size: float
-
-    class Config:
-        frozen = True
 
 
 class DetailLabelFragment(BaseModel):
@@ -140,9 +186,6 @@ class DetailLabelFragment(BaseModel):
     instance: int
     name: Optional[str]
     features: List[DetailLabelFragmentFeatures]
-
-    class Config:
-        frozen = True
 
 
 class MultiScaleRepresentationFragmentDerived(Representation, BaseModel):
@@ -159,17 +202,11 @@ class MultiScaleRepresentationFragmentDerived(Representation, BaseModel):
     meta: Optional[Dict]
     store: Optional[Store]
 
-    class Config:
-        frozen = True
-
 
 class MultiScaleRepresentationFragment(Representation, BaseModel):
     typename: Optional[Literal["Representation"]] = Field(alias="__typename")
     derived: Optional[List[Optional[MultiScaleRepresentationFragmentDerived]]]
     "Derived Images from this Image"
-
-    class Config:
-        frozen = True
 
 
 class RepresentationFragmentSample(BaseModel):
@@ -182,8 +219,10 @@ class RepresentationFragmentSample(BaseModel):
     id: ID
     name: str
 
-    class Config:
-        frozen = True
+
+class RepresentationFragmentOmero(BaseModel):
+    typename: Optional[Literal["OmeroRepresentation"]] = Field(alias="__typename")
+    scale: Optional[List[Optional[float]]]
 
 
 class RepresentationFragment(Representation, BaseModel):
@@ -198,9 +237,8 @@ class RepresentationFragment(Representation, BaseModel):
     "The Representation can have varying types, consult your API"
     name: Optional[str]
     "Cleartext name"
-
-    class Config:
-        frozen = True
+    omero: Optional[RepresentationFragmentOmero]
+    "Metadata in Omero-compliant format"
 
 
 class ListRepresentationFragmentSample(BaseModel):
@@ -213,9 +251,6 @@ class ListRepresentationFragmentSample(BaseModel):
     id: ID
     name: str
 
-    class Config:
-        frozen = True
-
 
 class ListRepresentationFragment(Representation, BaseModel):
     typename: Optional[Literal["Representation"]] = Field(alias="__typename")
@@ -224,9 +259,6 @@ class ListRepresentationFragment(Representation, BaseModel):
     "Cleartext name"
     sample: Optional[ListRepresentationFragmentSample]
     "The Sample this representation belongs to"
-
-    class Config:
-        frozen = True
 
 
 class ROIFragmentVectors(BaseModel):
@@ -237,9 +269,10 @@ class ROIFragmentVectors(BaseModel):
     "Y-coordinate"
     z: Optional[float]
     "Z-coordinate"
-
-    class Config:
-        frozen = True
+    t: Optional[float]
+    "T-coordinate"
+    c: Optional[float]
+    "C-coordinate"
 
 
 class ROIFragmentRepresentation(Representation, BaseModel):
@@ -251,9 +284,6 @@ class ROIFragmentRepresentation(Representation, BaseModel):
     typename: Optional[Literal["Representation"]] = Field(alias="__typename")
     id: ID
 
-    class Config:
-        frozen = True
-
 
 class ROIFragmentCreator(BaseModel):
     """A reflection on the real User"""
@@ -262,9 +292,6 @@ class ROIFragmentCreator(BaseModel):
     id: ID
     color: Optional[str]
     "The associated color for this user"
-
-    class Config:
-        frozen = True
 
 
 class ROIFragment(ROI, BaseModel):
@@ -276,9 +303,6 @@ class ROIFragment(ROI, BaseModel):
     representation: Optional[ROIFragmentRepresentation]
     creator: ROIFragmentCreator
 
-    class Config:
-        frozen = True
-
 
 class MultiScaleSampleFragmentRepresentationsDerived(Representation, BaseModel):
     """A Representation is a multi-dimensional Array that can do what ever it wants
@@ -288,9 +312,6 @@ class MultiScaleSampleFragmentRepresentationsDerived(Representation, BaseModel):
 
     typename: Optional[Literal["Representation"]] = Field(alias="__typename")
     store: Optional[Store]
-
-    class Config:
-        frozen = True
 
 
 class MultiScaleSampleFragmentRepresentations(Representation, BaseModel):
@@ -305,18 +326,12 @@ class MultiScaleSampleFragmentRepresentations(Representation, BaseModel):
     derived: Optional[List[Optional[MultiScaleSampleFragmentRepresentationsDerived]]]
     "Derived Images from this Image"
 
-    class Config:
-        frozen = True
-
 
 class MultiScaleSampleFragment(BaseModel):
     typename: Optional[Literal["Sample"]] = Field(alias="__typename")
     id: ID
     name: str
     representations: Optional[List[Optional[MultiScaleSampleFragmentRepresentations]]]
-
-    class Config:
-        frozen = True
 
 
 class Get_label_forQuery(BaseModel):
@@ -330,9 +345,6 @@ class Get_label_forQuery(BaseModel):
     class Meta:
         document = "fragment DetailLabel on Label {\n  id\n  instance\n  name\n  features {\n    id\n    size\n  }\n}\n\nquery get_label_for($representation: ID!, $instance: Int!) {\n  labelFor(representation: $representation, instance: $instance) {\n    ...DetailLabel\n  }\n}"
 
-    class Config:
-        frozen = True
-
 
 class Get_multiscale_repQuery(BaseModel):
     representation: Optional[MultiScaleRepresentationFragment]
@@ -344,9 +356,6 @@ class Get_multiscale_repQuery(BaseModel):
     class Meta:
         document = 'fragment MultiScaleRepresentation on Representation {\n  derived(tags: ["multiscale"]) {\n    name\n    tags\n    meta\n    store\n  }\n}\n\nquery get_multiscale_rep($id: ID!) {\n  representation(id: $id) {\n    ...MultiScaleRepresentation\n  }\n}'
 
-    class Config:
-        frozen = True
-
 
 class Get_representationQuery(BaseModel):
     representation: Optional[RepresentationFragment]
@@ -356,10 +365,7 @@ class Get_representationQuery(BaseModel):
         id: ID
 
     class Meta:
-        document = "fragment Representation on Representation {\n  sample {\n    id\n    name\n  }\n  type\n  id\n  store\n  variety\n  name\n}\n\nquery get_representation($id: ID!) {\n  representation(id: $id) {\n    ...Representation\n  }\n}"
-
-    class Config:
-        frozen = True
+        document = "fragment Representation on Representation {\n  sample {\n    id\n    name\n  }\n  type\n  id\n  store\n  variety\n  name\n  omero {\n    scale\n  }\n}\n\nquery get_representation($id: ID!) {\n  representation(id: $id) {\n    ...Representation\n  }\n}"
 
 
 class Get_some_representationsQuery(BaseModel):
@@ -372,9 +378,6 @@ class Get_some_representationsQuery(BaseModel):
     class Meta:
         document = 'fragment ListRepresentation on Representation {\n  id\n  name\n  sample {\n    id\n    name\n  }\n}\n\nquery get_some_representations {\n  representations(limit: 10, order: "-created_at") {\n    ...ListRepresentation\n  }\n}'
 
-    class Config:
-        frozen = True
-
 
 class Get_roisQuery(BaseModel):
     rois: Optional[List[Optional[ROIFragment]]]
@@ -385,10 +388,7 @@ class Get_roisQuery(BaseModel):
         type: Optional[List[Optional[RoiTypeInput]]] = None
 
     class Meta:
-        document = "fragment ROI on ROI {\n  id\n  vectors {\n    x\n    y\n    z\n  }\n  type\n  representation {\n    id\n  }\n  creator {\n    id\n    color\n  }\n}\n\nquery get_rois($representation: ID!, $type: [RoiTypeInput]) {\n  rois(representation: $representation, type: $type) {\n    ...ROI\n  }\n}"
-
-    class Config:
-        frozen = True
+        document = "fragment ROI on ROI {\n  id\n  vectors {\n    x\n    y\n    z\n    t\n    c\n  }\n  type\n  representation {\n    id\n  }\n  creator {\n    id\n    color\n  }\n}\n\nquery get_rois($representation: ID!, $type: [RoiTypeInput]) {\n  rois(representation: $representation, type: $type) {\n    ...ROI\n  }\n}"
 
 
 class Expand_multiscaleQuery(BaseModel):
@@ -401,18 +401,12 @@ class Expand_multiscaleQuery(BaseModel):
     class Meta:
         document = 'fragment MultiScaleSample on Sample {\n  id\n  name\n  representations(tags: ["multiscale"]) {\n    id\n    store\n    derived(ordering: "-meta_multiscale_depth") {\n      store\n    }\n  }\n}\n\nquery expand_multiscale($id: ID!) {\n  sample(id: $id) {\n    ...MultiScaleSample\n  }\n}'
 
-    class Config:
-        frozen = True
-
 
 class Watch_roisSubscriptionRois(BaseModel):
     typename: Optional[Literal["RoiEvent"]] = Field(alias="__typename")
     update: Optional[ROIFragment]
     delete: Optional[ID]
     create: Optional[ROIFragment]
-
-    class Config:
-        frozen = True
 
 
 class Watch_roisSubscription(BaseModel):
@@ -422,10 +416,7 @@ class Watch_roisSubscription(BaseModel):
         representation: ID
 
     class Meta:
-        document = "fragment ROI on ROI {\n  id\n  vectors {\n    x\n    y\n    z\n  }\n  type\n  representation {\n    id\n  }\n  creator {\n    id\n    color\n  }\n}\n\nsubscription watch_rois($representation: ID!) {\n  rois(representation: $representation) {\n    update {\n      ...ROI\n    }\n    delete\n    create {\n      ...ROI\n    }\n  }\n}"
-
-    class Config:
-        frozen = True
+        document = "fragment ROI on ROI {\n  id\n  vectors {\n    x\n    y\n    z\n    t\n    c\n  }\n  type\n  representation {\n    id\n  }\n  creator {\n    id\n    color\n  }\n}\n\nsubscription watch_rois($representation: ID!) {\n  rois(representation: $representation) {\n    update {\n      ...ROI\n    }\n    delete\n    create {\n      ...ROI\n    }\n  }\n}"
 
 
 class Create_roiMutation(BaseModel):
@@ -439,18 +430,12 @@ class Create_roiMutation(BaseModel):
         type: RoiTypeInput
 
     class Meta:
-        document = "fragment ROI on ROI {\n  id\n  vectors {\n    x\n    y\n    z\n  }\n  type\n  representation {\n    id\n  }\n  creator {\n    id\n    color\n  }\n}\n\nmutation create_roi($representation: ID!, $vectors: [InputVector]!, $creator: ID, $type: RoiTypeInput!) {\n  createROI(\n    representation: $representation\n    vectors: $vectors\n    type: $type\n    creator: $creator\n  ) {\n    ...ROI\n  }\n}"
-
-    class Config:
-        frozen = True
+        document = "fragment ROI on ROI {\n  id\n  vectors {\n    x\n    y\n    z\n    t\n    c\n  }\n  type\n  representation {\n    id\n  }\n  creator {\n    id\n    color\n  }\n}\n\nmutation create_roi($representation: ID!, $vectors: [InputVector]!, $creator: ID, $type: RoiTypeInput!) {\n  createROI(\n    representation: $representation\n    vectors: $vectors\n    type: $type\n    creator: $creator\n  ) {\n    ...ROI\n  }\n}"
 
 
 class Delete_roiMutationDeleteroi(BaseModel):
     typename: Optional[Literal["DeleteROIResult"]] = Field(alias="__typename")
     id: Optional[str]
-
-    class Config:
-        frozen = True
 
 
 class Delete_roiMutation(BaseModel):
@@ -465,9 +450,6 @@ class Delete_roiMutation(BaseModel):
             "mutation delete_roi($id: ID!) {\n  deleteROI(id: $id) {\n    id\n  }\n}"
         )
 
-    class Config:
-        frozen = True
-
 
 class Create_imageMutationImage1Derived(Representation, BaseModel):
     """A Representation is a multi-dimensional Array that can do what ever it wants
@@ -477,9 +459,6 @@ class Create_imageMutationImage1Derived(Representation, BaseModel):
 
     typename: Optional[Literal["Representation"]] = Field(alias="__typename")
     id: ID
-
-    class Config:
-        frozen = True
 
 
 class Create_imageMutationImage1(Representation, BaseModel):
@@ -495,9 +474,6 @@ class Create_imageMutationImage1(Representation, BaseModel):
     derived: Optional[List[Optional[Create_imageMutationImage1Derived]]]
     "Derived Images from this Image"
 
-    class Config:
-        frozen = True
-
 
 class Create_imageMutationImage2Derived(Representation, BaseModel):
     """A Representation is a multi-dimensional Array that can do what ever it wants
@@ -507,9 +483,6 @@ class Create_imageMutationImage2Derived(Representation, BaseModel):
 
     typename: Optional[Literal["Representation"]] = Field(alias="__typename")
     id: ID
-
-    class Config:
-        frozen = True
 
 
 class Create_imageMutationImage2(Representation, BaseModel):
@@ -525,9 +498,6 @@ class Create_imageMutationImage2(Representation, BaseModel):
     derived: Optional[List[Optional[Create_imageMutationImage2Derived]]]
     "Derived Images from this Image"
 
-    class Config:
-        frozen = True
-
 
 class Create_imageMutation(BaseModel):
     image1: Optional[Create_imageMutationImage1]
@@ -540,9 +510,6 @@ class Create_imageMutation(BaseModel):
 
     class Meta:
         document = "mutation create_image($xarray: XArray!) {\n  image1: fromXArray(xarray: $xarray) {\n    id\n    name\n    derived {\n      id\n    }\n  }\n  image2: fromXArray(xarray: $xarray) {\n    id\n    name\n    derived {\n      id\n    }\n  }\n}"
-
-    class Config:
-        frozen = True
 
 
 async def aget_label_for(
@@ -989,4 +956,5 @@ def create_image(xarray: ArrayInput, rath: MikroRath = None) -> Create_imageMuta
     return execute(Create_imageMutation, {"xarray": xarray}, rath=rath)
 
 
+DescendendInput.update_forward_refs()
 OmeroRepresentationInput.update_forward_refs()
