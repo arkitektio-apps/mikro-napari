@@ -1,30 +1,36 @@
-from tracemalloc import Statistic
 import napari
-from arkitekt.compositions.base import Arkitekt
-from arkitekt.structures.registry import StructureRegistry
-from arkitekt.widgets import SearchWidget
+from arkitekt.apps.rekuest import ArkitektRekuest
+from rekuest.structures.registry import StructureRegistry
+from rekuest.widgets import SearchWidget
 from fakts.fakts import Fakts
 from fakts.grants.meta.failsafe import FailsafeGrant
-from fakts.grants.remote.claim import ClaimGrant
 from fakts.grants.remote.public_redirect_grant import PublicRedirectGrant
 from koil.qt import QtRunner
 from mikro.api.schema import (
     RepresentationVariety,
     Search_representationQuery,
     afrom_xarray,
+    aget_roi,
     from_xarray,
 )
 from mikro_napari.api.schema import (
+    ROIFragment,
     RepresentationFragment,
+    Search_roisQuery,
     aget_representation,
 )
 from qtpy import QtWidgets
 from qtpy import QtCore
-from mikro.arkitekt import ConnectedApp
+from arkitekt.apps.connected import ConnectedApp
 from koil.composition.qt import QtPedanticKoil
 from herre.fakts import FaktsHerre
 from arkitekt.qt.magic_bar import AppState, MagicBar
-from arkitekt.qt.builders import QtInLoopBuilder
+from rekuest.qt.builders import (
+    QtInLoopActorBuilder,
+    QtInLoopBuilder,
+    QtPassFutureActorBuilder,
+    QtPassFutureBuilder,
+)
 from mikro_napari.models.representation import RepresentationQtModel
 from mikro_napari.widgets.dialogs.open_image import OpenImageDialog
 from fakts.grants.remote.base import StaticDiscovery
@@ -39,7 +45,8 @@ SMLM_REPRESENTATIONS = SearchWidget(
             label: name
         }
     }
-    """
+    """,
+    ward="mikro",
 )  #
 
 
@@ -51,7 +58,8 @@ MULTISCALE_REPRESENTATIONS = SearchWidget(
                 label: name
             }
         }
-        """
+        """,
+    ward="mikro",
 )
 
 stregistry = StructureRegistry()
@@ -61,20 +69,34 @@ stregistry.register_as_structure(
     RepresentationFragment,
     "@mikro/representation",
     aget_representation,
-    default_widget=SearchWidget(query=Search_representationQuery.Meta.document),
+    default_widget=SearchWidget(
+        query=Search_representationQuery.Meta.document, ward="mikro"
+    ),
+)
+
+stregistry.register_as_structure(
+    ROIFragment,
+    "@mikro/roi",
+    aget_roi,
+    default_widget=SearchWidget(query=Search_roisQuery.Meta.document, ward="mikro"),
 )
 
 
 class MikroNapariWidget(QtWidgets.QWidget):
     emit_image: QtCore.Signal = QtCore.Signal(object)
 
-    def __init__(self, viewer: napari.Viewer, *args, **kwargs):
+    def __init__(
+        self, viewer: napari.Viewer, app: ConnectedApp = None, *args, **kwargs
+    ):
         super(MikroNapariWidget, self).__init__(*args, **kwargs)
+
         self.viewer = viewer
 
-        self.app = ConnectedApp(
-            koil=QtPedanticKoil(uvify=False, parent=self),
-            arkitekt=Arkitekt(structure_registry=stregistry),
+        self.mylayout = QtWidgets.QVBoxLayout()
+
+        self.app = app or ConnectedApp(
+            koil=QtPedanticKoil(uvify=False),
+            rekuest=ArkitektRekuest(structure_registry=stregistry),
             fakts=Fakts(
                 subapp="napari",
                 grant=FailsafeGrant(
@@ -86,15 +108,18 @@ class MikroNapariWidget(QtWidgets.QWidget):
             ),
             herre=FaktsHerre(),
         )
+
+        self.app.koil.parent = self
+
         self.viewer.window.app = self.app
+
+        self.representation_controller = RepresentationQtModel(self)
 
         self.app.enter()
 
         self.magic_bar = MagicBar(self.app, dark_mode=True)
         self.magic_bar.app_up.connect(self.on_app_up)
         self.magic_bar.app_down.connect(self.on_app_down)
-
-        self.representation_controller = RepresentationQtModel(self.app, self.viewer)
 
         self.upload_task = QtRunner(afrom_xarray)
         self.upload_task.errored.connect(self.on_error)
@@ -115,25 +140,26 @@ class MikroNapariWidget(QtWidgets.QWidget):
 
         self.active_non_mikro_layers = []
         self.active_mikro_layers = []
-        self.layout = QtWidgets.QVBoxLayout()
-        self.layout.addWidget(self.open_image_button)
-        self.layout.addWidget(self.upload_image_button)
-        self.layout.addWidget(self.magic_bar)
+        self.mylayout.addWidget(self.open_image_button)
+        self.mylayout.addWidget(self.upload_image_button)
+        self.mylayout.addWidget(self.magic_bar)
 
         self.setWindowTitle("My Own Title")
-        self.setLayout(self.layout)
+        self.setLayout(self.mylayout)
 
         self.viewer.layers.selection.events.active.connect(self.on_selection_changed)
 
-        self.app.arkitekt.register(builder=QtInLoopBuilder, interfaces=["show"])(
+        self.app.rekuest.register(builder=QtInLoopActorBuilder(), interfaces=["show"])(
             self.representation_controller.on_image_loaded
         )
 
-        self.app.arkitekt.register(builder=QtInLoopBuilder, interfaces=["show"])(
-            self.representation_controller.show_images
+        self.app.rekuest.register(builder=QtInLoopActorBuilder(), interfaces=["show"])(
+            self.representation_controller.tile_images
         )
-
-        self.app.arkitekt.register(interfaces=["producer"])(self.upload_layer)
+        self.app.rekuest.register(interfaces=["producer"])(self.upload_layer)
+        self.app.rekuest.register(interfaces=["producer"])(
+            self.representation_controller.stream_rois
+        )
 
     def on_app_up(self):
         self.open_image_button.setEnabled(True)

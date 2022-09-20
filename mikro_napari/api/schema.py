@@ -1,28 +1,47 @@
-from mikro.funcs import asubscribe, execute, subscribe, aexecute
-from typing import Iterator, Literal, AsyncIterator, Dict, Optional, List
-from mikro.traits import Representation, Vectorizable, ROI
-from pydantic import Field, BaseModel
-from rath.scalars import ID
-from mikro.scalars import ArrayInput, Store
+from mikro.funcs import execute, subscribe, aexecute, asubscribe
+from typing import Iterator, Optional, Literal, List, AsyncIterator, Dict
 from enum import Enum
+from mikro.scalars import Store, ArrayInput, FeatureValue
+from mikro.traits import Representation, ROI, Vectorizable
 from mikro.rath import MikroRath
+from datetime import datetime
+from pydantic import BaseModel, Field
+from rath.scalars import ID
 
 
-class AvailableModels(str, Enum):
-    GRUNNLAG_ANIMAL = "GRUNNLAG_ANIMAL"
+class CommentableModels(str, Enum):
+    GRUNNLAG_USERMETA = "GRUNNLAG_USERMETA"
+    GRUNNLAG_ANTIBODY = "GRUNNLAG_ANTIBODY"
     GRUNNLAG_EXPERIMENT = "GRUNNLAG_EXPERIMENT"
     GRUNNLAG_EXPERIMENTALGROUP = "GRUNNLAG_EXPERIMENTALGROUP"
-    GRUNNLAG_REPRESENTATION = "GRUNNLAG_REPRESENTATION"
-    GRUNNLAG_THUMBNAIL = "GRUNNLAG_THUMBNAIL"
-    GRUNNLAG_SAMPLE = "GRUNNLAG_SAMPLE"
-    GRUNNLAG_ROI = "GRUNNLAG_ROI"
+    GRUNNLAG_ANIMAL = "GRUNNLAG_ANIMAL"
     GRUNNLAG_OMEROFILE = "GRUNNLAG_OMEROFILE"
+    GRUNNLAG_SAMPLE = "GRUNNLAG_SAMPLE"
+    GRUNNLAG_REPRESENTATION = "GRUNNLAG_REPRESENTATION"
+    GRUNNLAG_OMERO = "GRUNNLAG_OMERO"
     GRUNNLAG_METRIC = "GRUNNLAG_METRIC"
-    GRUNNLAG_ANTIBODY = "GRUNNLAG_ANTIBODY"
-    GRUNNLAG_USERMETA = "GRUNNLAG_USERMETA"
+    GRUNNLAG_THUMBNAIL = "GRUNNLAG_THUMBNAIL"
+    GRUNNLAG_ROI = "GRUNNLAG_ROI"
     GRUNNLAG_LABEL = "GRUNNLAG_LABEL"
-    GRUNNLAG_SIZEFEATURE = "GRUNNLAG_SIZEFEATURE"
-    GRUNNLAG_COMMENT = "GRUNNLAG_COMMENT"
+    GRUNNLAG_FEATURE = "GRUNNLAG_FEATURE"
+    BORD_TABLE = "BORD_TABLE"
+
+
+class SharableModels(str, Enum):
+    GRUNNLAG_USERMETA = "GRUNNLAG_USERMETA"
+    GRUNNLAG_ANTIBODY = "GRUNNLAG_ANTIBODY"
+    GRUNNLAG_EXPERIMENT = "GRUNNLAG_EXPERIMENT"
+    GRUNNLAG_EXPERIMENTALGROUP = "GRUNNLAG_EXPERIMENTALGROUP"
+    GRUNNLAG_ANIMAL = "GRUNNLAG_ANIMAL"
+    GRUNNLAG_OMEROFILE = "GRUNNLAG_OMEROFILE"
+    GRUNNLAG_SAMPLE = "GRUNNLAG_SAMPLE"
+    GRUNNLAG_REPRESENTATION = "GRUNNLAG_REPRESENTATION"
+    GRUNNLAG_OMERO = "GRUNNLAG_OMERO"
+    GRUNNLAG_METRIC = "GRUNNLAG_METRIC"
+    GRUNNLAG_THUMBNAIL = "GRUNNLAG_THUMBNAIL"
+    GRUNNLAG_ROI = "GRUNNLAG_ROI"
+    GRUNNLAG_LABEL = "GRUNNLAG_LABEL"
+    GRUNNLAG_FEATURE = "GRUNNLAG_FEATURE"
     BORD_TABLE = "BORD_TABLE"
 
 
@@ -84,6 +103,17 @@ class ROIType(str, Enum):
     "Unknown"
 
 
+class PandasDType(str, Enum):
+    OBJECT = "OBJECT"
+    INT64 = "INT64"
+    FLOAT64 = "FLOAT64"
+    BOOL = "BOOL"
+    CATEGORY = "CATEGORY"
+    DATETIME65 = "DATETIME65"
+    TIMEDELTA = "TIMEDELTA"
+    UNICODE = "UNICODE"
+
+
 class RoiTypeInput(str, Enum):
     """An enumeration."""
 
@@ -101,11 +131,39 @@ class RoiTypeInput(str, Enum):
     "Unknown"
 
 
+class DescendendInput(BaseModel):
+    children: Optional[List[Optional["DescendendInput"]]]
+    typename: Optional[str]
+    "The type of the descendent"
+    user: Optional[str]
+    "The user that is mentioned"
+    bold: Optional[bool]
+    "Is this a bold leaf?"
+    italic: Optional[bool]
+    "Is this a italic leaf?"
+    code: Optional[bool]
+    "Is this a code leaf?"
+    text: Optional[str]
+    "The text of the leaf"
+
+
+class GroupAssignmentInput(BaseModel):
+    permissions: List[Optional[str]]
+    group: ID
+
+
+class UserAssignmentInput(BaseModel):
+    permissions: List[Optional[str]]
+    user: str
+    "The user email"
+
+
 class OmeroRepresentationInput(BaseModel):
     planes: Optional[List[Optional["PlaneInput"]]]
     channels: Optional[List[Optional["ChannelInput"]]]
     physical_size: Optional["PhysicalSizeInput"] = Field(alias="physicalSize")
     scale: Optional[List[Optional[float]]]
+    acquisition_date: Optional[datetime] = Field(alias="acquisitionDate")
 
 
 class PlaneInput(BaseModel):
@@ -147,37 +205,13 @@ class InputVector(BaseModel, Vectorizable):
     "T-coordinate"
 
 
-class GroupAssignmentInput(BaseModel):
-    permissions: List[Optional[str]]
-    group: ID
-
-
-class UserAssignmentInput(BaseModel):
-    permissions: List[Optional[str]]
-    user: str
-    "The user email"
-
-
-class DescendendInput(BaseModel):
-    children: Optional[List[Optional["DescendendInput"]]]
-    typename: Optional[str]
-    "The type of the descendent"
-    user: Optional[str]
-    "The user that is mentioned"
-    bold: Optional[bool]
-    "Is this a bold leaf?"
-    italic: Optional[bool]
-    "Is this a italic leaf?"
-    code: Optional[bool]
-    "Is this a code leaf?"
-    text: Optional[str]
-    "The text of the leaf"
-
-
 class DetailLabelFragmentFeatures(BaseModel):
-    typename: Optional[Literal["SizeFeature"]] = Field(alias="__typename")
+    typename: Optional[Literal["Feature"]] = Field(alias="__typename")
     id: ID
-    size: float
+    key: str
+    "The sKesyss"
+    value: Optional[FeatureValue]
+    "Value"
 
 
 class DetailLabelFragment(BaseModel):
@@ -185,7 +219,8 @@ class DetailLabelFragment(BaseModel):
     id: ID
     instance: int
     name: Optional[str]
-    features: List[DetailLabelFragmentFeatures]
+    features: Optional[List[Optional[DetailLabelFragmentFeatures]]]
+    "Features attached to this Label"
 
 
 class MultiScaleRepresentationFragmentDerived(Representation, BaseModel):
@@ -221,7 +256,7 @@ class RepresentationFragmentSample(BaseModel):
 
 
 class RepresentationFragmentOmero(BaseModel):
-    typename: Optional[Literal["OmeroRepresentation"]] = Field(alias="__typename")
+    typename: Optional[Literal["Omero"]] = Field(alias="__typename")
     scale: Optional[List[Optional[float]]]
 
 
@@ -238,7 +273,54 @@ class RepresentationFragment(Representation, BaseModel):
     name: Optional[str]
     "Cleartext name"
     omero: Optional[RepresentationFragmentOmero]
-    "Metadata in Omero-compliant format"
+
+
+class RepresentationAndMaskFragmentSample(BaseModel):
+    """Samples are storage containers for representations. A Sample is to be understood analogous to a Biological Sample. It existed in Time (the time of acquisiton and experimental procedure),
+    was measured in space (x,y,z) and in different modalities (c). Sample therefore provide a datacontainer where each Representation of
+    the data shares the same dimensions. Every transaction to our image data is still part of the original acuqistion, so also filtered images are refering back to the sample
+    """
+
+    typename: Optional[Literal["Sample"]] = Field(alias="__typename")
+    id: ID
+    name: str
+
+
+class RepresentationAndMaskFragmentDerived(Representation, BaseModel):
+    """A Representation is a multi-dimensional Array that can do what ever it wants
+
+
+    @elements/rep:latest"""
+
+    typename: Optional[Literal["Representation"]] = Field(alias="__typename")
+    id: ID
+    store: Optional[Store]
+    variety: RepresentationVariety
+    "The Representation can have varying types, consult your API"
+    name: Optional[str]
+    "Cleartext name"
+
+
+class RepresentationAndMaskFragmentOmero(BaseModel):
+    typename: Optional[Literal["Omero"]] = Field(alias="__typename")
+    scale: Optional[List[Optional[float]]]
+
+
+class RepresentationAndMaskFragment(Representation, BaseModel):
+    typename: Optional[Literal["Representation"]] = Field(alias="__typename")
+    sample: Optional[RepresentationAndMaskFragmentSample]
+    "The Sample this representation belongs to"
+    type: Optional[str]
+    "The Representation can have varying types, consult your API"
+    id: ID
+    store: Optional[Store]
+    variety: RepresentationVariety
+    "The Representation can have varying types, consult your API"
+    name: Optional[str]
+    "Cleartext name"
+    derived: Optional[List[Optional[RepresentationAndMaskFragmentDerived]]]
+    "Derived Images from this Image"
+    omero: Optional[RepresentationAndMaskFragmentOmero]
 
 
 class ListRepresentationFragmentSample(BaseModel):
@@ -286,12 +368,10 @@ class ROIFragmentRepresentation(Representation, BaseModel):
 
 
 class ROIFragmentCreator(BaseModel):
-    """A reflection on the real User"""
-
     typename: Optional[Literal["User"]] = Field(alias="__typename")
     id: ID
-    color: Optional[str]
-    "The associated color for this user"
+    color: str
+    "The color of the user"
 
 
 class ROIFragment(ROI, BaseModel):
@@ -343,7 +423,7 @@ class Get_label_forQuery(BaseModel):
         instance: int
 
     class Meta:
-        document = "fragment DetailLabel on Label {\n  id\n  instance\n  name\n  features {\n    id\n    size\n  }\n}\n\nquery get_label_for($representation: ID!, $instance: Int!) {\n  labelFor(representation: $representation, instance: $instance) {\n    ...DetailLabel\n  }\n}"
+        document = "fragment DetailLabel on Label {\n  id\n  instance\n  name\n  features {\n    id\n    key\n    value\n  }\n}\n\nquery get_label_for($representation: ID!, $instance: Int!) {\n  labelFor(representation: $representation, instance: $instance) {\n    ...DetailLabel\n  }\n}"
 
 
 class Get_multiscale_repQuery(BaseModel):
@@ -368,6 +448,17 @@ class Get_representationQuery(BaseModel):
         document = "fragment Representation on Representation {\n  sample {\n    id\n    name\n  }\n  type\n  id\n  store\n  variety\n  name\n  omero {\n    scale\n  }\n}\n\nquery get_representation($id: ID!) {\n  representation(id: $id) {\n    ...Representation\n  }\n}"
 
 
+class Get_representation_and_maskQuery(BaseModel):
+    representation: Optional[RepresentationAndMaskFragment]
+    "Get a single representation by ID"
+
+    class Arguments(BaseModel):
+        id: ID
+
+    class Meta:
+        document = "fragment RepresentationAndMask on Representation {\n  sample {\n    id\n    name\n  }\n  type\n  id\n  store\n  variety\n  name\n  derived(variety: MASK) {\n    id\n    store\n    variety\n    name\n  }\n  omero {\n    scale\n  }\n}\n\nquery get_representation_and_mask($id: ID!) {\n  representation(id: $id) {\n    ...RepresentationAndMask\n  }\n}"
+
+
 class Get_some_representationsQuery(BaseModel):
     representations: Optional[List[Optional[ListRepresentationFragment]]]
     "All represetations"
@@ -389,6 +480,34 @@ class Get_roisQuery(BaseModel):
 
     class Meta:
         document = "fragment ROI on ROI {\n  id\n  vectors {\n    x\n    y\n    z\n    t\n    c\n  }\n  type\n  representation {\n    id\n  }\n  creator {\n    id\n    color\n  }\n}\n\nquery get_rois($representation: ID!, $type: [RoiTypeInput]) {\n  rois(representation: $representation, type: $type) {\n    ...ROI\n  }\n}"
+
+
+class Get_roiQuery(BaseModel):
+    roi: Optional[ROIFragment]
+    "Get a single representation by ID"
+
+    class Arguments(BaseModel):
+        id: ID
+
+    class Meta:
+        document = "fragment ROI on ROI {\n  id\n  vectors {\n    x\n    y\n    z\n    t\n    c\n  }\n  type\n  representation {\n    id\n  }\n  creator {\n    id\n    color\n  }\n}\n\nquery get_roi($id: ID!) {\n  roi(id: $id) {\n    ...ROI\n  }\n}"
+
+
+class Search_roisQueryRois(ROI, BaseModel):
+    typename: Optional[Literal["ROI"]] = Field(alias="__typename")
+    label: ID
+    value: ID
+
+
+class Search_roisQuery(BaseModel):
+    rois: Optional[List[Optional[Search_roisQueryRois]]]
+    "All represetations"
+
+    class Arguments(BaseModel):
+        search: str
+
+    class Meta:
+        document = "query search_rois($search: String!) {\n  rois(repname: $search) {\n    label: id\n    value: id\n  }\n}"
 
 
 class Expand_multiscaleQuery(BaseModel):
@@ -644,6 +763,52 @@ def get_representation(
     return execute(Get_representationQuery, {"id": id}, rath=rath).representation
 
 
+async def aget_representation_and_mask(
+    id: ID, rath: MikroRath = None
+) -> Optional[RepresentationAndMaskFragment]:
+    """get_representation_and_mask
+
+
+     representation: A Representation is a multi-dimensional Array that can do what ever it wants
+
+
+    @elements/rep:latest
+
+
+    Arguments:
+        id (ID): id
+        rath (mikro.rath.MikroRath, optional): The mikro rath client
+
+    Returns:
+        Optional[RepresentationAndMaskFragment]"""
+    return (
+        await aexecute(Get_representation_and_maskQuery, {"id": id}, rath=rath)
+    ).representation
+
+
+def get_representation_and_mask(
+    id: ID, rath: MikroRath = None
+) -> Optional[RepresentationAndMaskFragment]:
+    """get_representation_and_mask
+
+
+     representation: A Representation is a multi-dimensional Array that can do what ever it wants
+
+
+    @elements/rep:latest
+
+
+    Arguments:
+        id (ID): id
+        rath (mikro.rath.MikroRath, optional): The mikro rath client
+
+    Returns:
+        Optional[RepresentationAndMaskFragment]"""
+    return execute(
+        Get_representation_and_maskQuery, {"id": id}, rath=rath
+    ).representation
+
+
 async def aget_some_representations(
     rath: MikroRath = None,
 ) -> Optional[List[Optional[ListRepresentationFragment]]]:
@@ -728,6 +893,66 @@ def get_rois(
     return execute(
         Get_roisQuery, {"representation": representation, "type": type}, rath=rath
     ).rois
+
+
+async def aget_roi(id: ID, rath: MikroRath = None) -> Optional[ROIFragment]:
+    """get_roi
+
+
+
+    Arguments:
+        id (ID): id
+        rath (mikro.rath.MikroRath, optional): The mikro rath client
+
+    Returns:
+        Optional[ROIFragment]"""
+    return (await aexecute(Get_roiQuery, {"id": id}, rath=rath)).roi
+
+
+def get_roi(id: ID, rath: MikroRath = None) -> Optional[ROIFragment]:
+    """get_roi
+
+
+
+    Arguments:
+        id (ID): id
+        rath (mikro.rath.MikroRath, optional): The mikro rath client
+
+    Returns:
+        Optional[ROIFragment]"""
+    return execute(Get_roiQuery, {"id": id}, rath=rath).roi
+
+
+async def asearch_rois(
+    search: str, rath: MikroRath = None
+) -> Optional[List[Optional[Search_roisQueryRois]]]:
+    """search_rois
+
+
+
+    Arguments:
+        search (str): search
+        rath (mikro.rath.MikroRath, optional): The mikro rath client
+
+    Returns:
+        Optional[List[Optional[Search_roisQueryRois]]]"""
+    return (await aexecute(Search_roisQuery, {"search": search}, rath=rath)).rois
+
+
+def search_rois(
+    search: str, rath: MikroRath = None
+) -> Optional[List[Optional[Search_roisQueryRois]]]:
+    """search_rois
+
+
+
+    Arguments:
+        search (str): search
+        rath (mikro.rath.MikroRath, optional): The mikro rath client
+
+    Returns:
+        Optional[List[Optional[Search_roisQueryRois]]]"""
+    return execute(Search_roisQuery, {"search": search}, rath=rath).rois
 
 
 async def aexpand_multiscale(

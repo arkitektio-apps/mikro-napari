@@ -1,7 +1,8 @@
 from typing import Dict, List, Optional
 from importlib_metadata import metadata
-from qtpy import QtCore
-from koil.qt import QtRunner, QtGeneratorRunner
+from qtpy import QtCore, QtWidgets
+from arkitekt.apps.connected import ConnectedApp
+from koil.qt import QtFuture, QtGenerator, QtRunner, QtGeneratorRunner
 from mikro.api.schema import InputVector
 from mikro_napari.api.schema import (
     DetailLabelFragment,
@@ -17,8 +18,12 @@ from mikro_napari.api.schema import (
     create_roi,
     delete_roi,
 )
-
+import dask.array as da
+import xarray as xr
+import napari
 from napari.layers.shapes._shapes_constants import Mode
+import numpy as np
+
 
 DESIGN_MODE_MAP = {
     Mode.ADD_RECTANGLE: RoiTypeInput.RECTANGLE,
@@ -27,11 +32,38 @@ DESIGN_MODE_MAP = {
 }
 
 
-class RepresentationQtModel(QtCore.QObject):
-    def __init__(self, app, viewer, *args, **kwargs) -> None:
+class AskForRoi(QtWidgets.QWidget):
+    def __init__(
+        self,
+        controller,
+        *args,
+        **kwargs,
+    ) -> None:
         super().__init__(*args, **kwargs)
-        self.app = app
-        self.viewer = viewer
+        self.button = QtWidgets.QPushButton("All Rois Marked")
+        self.button.clicked.connect(self.on_done)
+        self.mylayout = controller.widget.mylayout
+
+    def ask(self, qt_generator):
+        self.qt_generator = qt_generator
+        self.mylayout.addWidget(self.button)
+        self.mylayout.update()
+
+    def on_done(self) -> None:
+        self.qt_generator.stop()
+        self.mylayout.removeWidget(self.button)
+        self.button.setParent(None)
+        self.mylayout.update()
+
+
+class RepresentationQtModel(QtCore.QObject):
+    rep_changed = QtCore.Signal(RepresentationFragment)
+
+    def __init__(self, widget, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.widget = widget
+        self.app: ConnectedApp = self.widget.app
+        self.viewer: napari.Viewer = self.widget.viewer
 
         self.get_rois_query = QtRunner(aget_rois)
         self.get_rois_query.returned.connect(self.on_rois_loaded)
@@ -48,15 +80,19 @@ class RepresentationQtModel(QtCore.QObject):
         self.get_label_query = QtRunner(aget_label_for)
         self.get_label_query.returned.connect(self.on_label_loaded)
         self.get_label_query.errored.connect(print)
+        self.rep_changed.connect(self.set_active_representation)
 
         self._active_representation = None
+        self.stream_roi_generator = None
         self._watchroistask = None
         self._getroistask = None
         self._getlabeltask = None
 
+        self.ask_roi_dialog = AskForRoi(self)
+
         self._image_layer = None
         self._roi_layer = None
-        self._roi_state: Dict[str, ROIFragment] = {}
+        self.roi_state: Dict[str, ROIFragment] = {}
 
     @property
     def active_representation(self) -> Optional[RepresentationFragment]:
@@ -64,6 +100,9 @@ class RepresentationQtModel(QtCore.QObject):
 
     @active_representation.setter
     def active_representation(self, value: RepresentationFragment):
+        self.rep_changed.emit(value)
+
+    def set_active_representation(self, value: RepresentationFragment):
         if self._getroistask and not self._getroistask.done():
             self._getroistask.cancel()
             self._getroistask.result(swallow_cancel=True)
@@ -116,28 +155,59 @@ class RepresentationQtModel(QtCore.QObject):
         """
         self.active_representation = rep
 
-    def show_images(self, reps: List[RepresentationFragment]):
-        """Show Images on Napari
-
-        Loads the images into the viewer
-
-        Args:
-            reps (List[RepresentationFragment]): The Image
-        """
-        print("SHOWING IMAGES", reps)
-        for i in reps:
-            self.active_representation = i
-
     def tile_images(self, reps: List[RepresentationFragment]):
-        """Show Images on Napari
+        """Tile Images on Napari
 
-        Loads the images into the viewer
+        Loads the images and tiles them into the viewer
 
         Args:
             reps (List[RepresentationFragment]): The Image
         """
-        for i in reps:
-            self.active_representation = i
+
+        shape_array = np.array([np.array(rep.data.shape[:4]) for rep in reps])
+        max_shape = np.max(shape_array, axis=0)
+
+        cdata = []
+        for rep in reps:
+            data = da.zeros(list(max_shape) + [rep.data.shape[4]])
+            data[
+                : rep.data.shape[0],
+                : rep.data.shape[1],
+                : rep.data.shape[2],
+                : rep.data.shape[3],
+                :,
+            ] = rep.data
+            cdata.append(data)
+
+        x = da.concatenate(cdata, axis=-1).squeeze()
+        name = " ".join([rep.name for rep in reps])
+
+        self.viewer.add_image(
+            x,
+            name=name,
+            metadata={"mikro": True, "type": "IMAGE"},
+            scale=reps[0].omero.scale if reps[0].omero else None,
+        )
+
+    async def stream_rois(self, rep: RepresentationFragment) -> ROIFragment:
+        """Stream ROIs
+
+        Asks the user to mark rois on the image, once user deams done, the rois are returned
+
+        Args:
+            rep (RepresentationFragment): The Image
+
+        Returns:
+            rois (List[RoiFragment]): The Image
+        """
+        self.active_representation = rep
+        self.stream_roi_generator = QtGenerator()
+        self.ask_roi_dialog.ask(self.stream_roi_generator)
+
+        async for roi in self.stream_roi_generator:
+            yield roi
+
+        self.stream_roi_generator = None
 
     def on_label_loaded(self, label: DetailLabelFragment):
         """Shows beauitful Images
@@ -156,6 +226,8 @@ class RepresentationQtModel(QtCore.QObject):
     def on_rois_updated(self, ev: Watch_roisSubscriptionRois):
         if ev.create:
             self.roi_state[ev.create.id] = ev.create
+            if self.stream_roi_generator:
+                self.stream_roi_generator.next(ev.create)
 
         if ev.delete:
             del self.roi_state[ev.delete]
