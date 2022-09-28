@@ -1,34 +1,56 @@
+from pyexpat import features
 from typing import Dict, List, Optional
 from importlib_metadata import metadata
 from qtpy import QtCore, QtWidgets
 from arkitekt.apps.connected import ConnectedApp
 from koil.qt import QtFuture, QtGenerator, QtRunner, QtGeneratorRunner
-from mikro.api.schema import InputVector
-from mikro_napari.api.schema import (
-    DetailLabelFragment,
+from mikro.api.schema import (
+    InputVector,
+    MetricFragment,
+    LabelFragment,
+    FeatureFragment,
     ROIFragment,
+    ListROIFragment,
     RepresentationFragment,
     RepresentationVariety,
     RoiTypeInput,
     Watch_roisSubscriptionRois,
     acreate_roi,
-    aget_label_for,
+    get_representation,
     aget_rois,
     awatch_rois,
     create_roi,
+)
+from mikro_napari.api.schema import (
+    DetailLabelFragment,
+    aget_label_for,
     delete_roi,
 )
+import pandas as pd
+
 import dask.array as da
 import xarray as xr
 import napari
 from napari.layers.shapes._shapes_constants import Mode
 import numpy as np
 
+from mikro_napari.utils import NapariROI, convert_roi_to_napari_roi
+
 
 DESIGN_MODE_MAP = {
     Mode.ADD_RECTANGLE: RoiTypeInput.RECTANGLE,
     Mode.ADD_ELLIPSE: RoiTypeInput.ELLIPSIS,
     Mode.ADD_LINE: RoiTypeInput.LINE,
+}
+
+SELECT_MODE_MAP = {
+    Mode.DIRECT: "direct",
+}
+
+
+DOUBLE_CLICK_MODE_MAP = {
+    Mode.ADD_POLYGON: RoiTypeInput.POLYGON,
+    Mode.ADD_PATH: RoiTypeInput.PATH,
 }
 
 
@@ -92,7 +114,7 @@ class RepresentationQtModel(QtCore.QObject):
 
         self._image_layer = None
         self._roi_layer = None
-        self.roi_state: Dict[str, ROIFragment] = {}
+        self.roi_state: Dict[str, ListROIFragment] = {}
 
     @property
     def active_representation(self) -> Optional[RepresentationFragment]:
@@ -125,9 +147,21 @@ class RepresentationQtModel(QtCore.QObject):
 
         scale = None
 
+        print(value.omero)
+
         if value.omero:
             if value.omero.scale:
                 scale = value.omero.scale
+            else:
+                phys = value.omero.physical_size
+                if phys:
+                    scale = [
+                        phys.c or 1,
+                        phys.t or 1,
+                        phys.z or 1,
+                        phys.x or 1,
+                        phys.y or 1,
+                    ]
 
         if value.variety == RepresentationVariety.RGB:
             self._image_layer = self.viewer.add_image(
@@ -142,6 +176,8 @@ class RepresentationQtModel(QtCore.QObject):
                 scale=scale,
             )
 
+        print(scale)
+
         self._image_layer.mouse_drag_callbacks.append(self.on_drag_image_layer)
         self._image_layer.name = f"{value.name} (ID: {value.id})"
 
@@ -154,6 +190,36 @@ class RepresentationQtModel(QtCore.QObject):
             rep (RepresentationFragment): The Image
         """
         self.active_representation = rep
+
+    def open_metric(self, metric: MetricFragment):
+        """Open a metric
+
+        Loads the metric into the viewer
+
+        Args:
+            rep (RepresentationFragment): The Image
+        """
+        self.active_representation = get_representation(metric.rep.id)
+
+    def open_label(self, label: LabelFragment):
+        """Show on Napari
+
+        Loads the label into the viewer
+
+        Args:
+            rep (RepresentationFragment): The Image
+        """
+        self.active_representation = get_representation(label.representation.id)
+
+    def open_feature(self, rep: FeatureFragment):
+        """Open Feature
+
+        Loads the feature into the viewer
+
+        Args:
+            rep (RepresentationFragment): The Image
+        """
+        self.active_representation = get_representation(rep.label.representation.id)
 
     def tile_images(self, reps: List[RepresentationFragment]):
         """Tile Images on Napari
@@ -219,7 +285,7 @@ class RepresentationQtModel(QtCore.QObject):
         """
         print("This is the label", label)
 
-    def on_rois_loaded(self, rois: List[ROIFragment]):
+    def on_rois_loaded(self, rois: List[ListROIFragment]):
         self.roi_state = {roi.id: roi for roi in rois}
         self.update_roi_layer()
 
@@ -255,10 +321,14 @@ class RepresentationQtModel(QtCore.QObject):
         while event.type != "mouse_release":
             yield
 
-        print("Fired")
+        if layer.mode in SELECT_MODE_MAP:
+            print(self._roi_layer.selected_data)
+            for i in self._roi_layer.selected_data:
+                napari_roi = self._napari_rois[i]
+                self.viewer.window.sidebar.select_roi(napari_roi)
 
         if layer.mode in DESIGN_MODE_MAP:
-            if len(self._roi_layer.data) > len(self.roi_state.items()):
+            if len(self._roi_layer.data) > len(self._napari_rois):
                 t, z, c = layer.position[:3]
 
                 self.create_rois_runner.run(
@@ -269,12 +339,30 @@ class RepresentationQtModel(QtCore.QObject):
                     type=DESIGN_MODE_MAP[layer.mode],
                 )
 
-        if len(self._roi_layer.data) < len(self.roi_state.items()):
-            there_rois = set([f for f in self._roi_layer.features[0]])
-            state_rois = set(self.roi_state.keys())
+        if len(self._roi_layer.data) < len(self._napari_rois):
+            there_rois = set([f for f in self._roi_layer.features["roi"]])
+            state_rois = set([f.id for f in self._napari_rois])
             difference_rois = state_rois - there_rois
             for roi_id in difference_rois:
                 delete_roi(roi_id)
+
+    def on_double_click_roi_layer(self, layer, event):
+        print("Fired")
+        print(self._roi_layer.features)
+        if layer.mode in DOUBLE_CLICK_MODE_MAP:
+            if len(self._roi_layer.data) > len(self._napari_rois):
+                t, z, c = layer.position[:3]
+
+                self.create_rois_runner.run(
+                    representation=self._active_representation.id,
+                    vectors=InputVector.list_from_numpyarray(
+                        self._roi_layer.data[-1], t=t, z=z, c=c
+                    ),
+                    type=DOUBLE_CLICK_MODE_MAP[layer.mode],
+                )
+
+    def print(self, *args, **kwargs):
+        print(*args, **kwargs)
 
     def update_roi_layer(self):
 
@@ -288,18 +376,27 @@ class RepresentationQtModel(QtCore.QObject):
                 }
             )
             self._roi_layer.mouse_drag_callbacks.append(self.on_drag_roi_layer)
+            self._roi_layer.mouse_double_click_callbacks.append(
+                self.on_double_click_roi_layer
+            )
+
+        self._napari_rois: List[NapariROI] = list(
+            filter(
+                lambda x: x is not None,
+                [convert_roi_to_napari_roi(roi) for roi in self.roi_state.values()],
+            )
+        )
 
         self._roi_layer.data = []
         self._roi_layer.name = f"ROIs for {self._active_representation.name}"
 
-        self._roi_layer.add(
-            [r.vector_data for key, r in self.roi_state.items()],
-            shape_type=[r.type.value.lower() for key, r in self.roi_state.items()],
-            edge_width=1,
-            edge_color="white",
-            face_color=[r.creator.color for key, r in self.roi_state.items()],
-        )
+        for i in self._napari_rois:
+            self._roi_layer.add(
+                i.data,
+                shape_type=i.type,
+                edge_width=1,
+                edge_color="white",
+                face_color=i.color,
+            )
 
-        self._roi_layer.features = [
-            [r.id, r.creator.id] for key, r in self.roi_state.items()
-        ]
+        self._roi_layer.features = {"roi": [r.id for r in self._napari_rois]}

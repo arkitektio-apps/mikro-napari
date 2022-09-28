@@ -1,12 +1,12 @@
-from mikro.funcs import execute, subscribe, aexecute, asubscribe
-from typing import Iterator, Optional, Literal, List, AsyncIterator, Dict
-from enum import Enum
-from mikro.scalars import Store, ArrayInput, FeatureValue
-from mikro.traits import Representation, ROI, Vectorizable
-from mikro.rath import MikroRath
+from mikro.funcs import aexecute, subscribe, asubscribe, execute
+from typing import Optional, List, AsyncIterator, Iterator, Literal, Dict
 from datetime import datetime
-from pydantic import BaseModel, Field
+from mikro.scalars import FeatureValue, Store, ArrayInput
+from mikro.traits import Representation, ROI, Vectorizable
+from pydantic import Field, BaseModel
+from enum import Enum
 from rath.scalars import ID
+from mikro.rath import MikroRath
 
 
 class CommentableModels(str, Enum):
@@ -18,6 +18,7 @@ class CommentableModels(str, Enum):
     GRUNNLAG_OMEROFILE = "GRUNNLAG_OMEROFILE"
     GRUNNLAG_SAMPLE = "GRUNNLAG_SAMPLE"
     GRUNNLAG_REPRESENTATION = "GRUNNLAG_REPRESENTATION"
+    GRUNNLAG_INSTRUMENT = "GRUNNLAG_INSTRUMENT"
     GRUNNLAG_OMERO = "GRUNNLAG_OMERO"
     GRUNNLAG_METRIC = "GRUNNLAG_METRIC"
     GRUNNLAG_THUMBNAIL = "GRUNNLAG_THUMBNAIL"
@@ -36,6 +37,7 @@ class SharableModels(str, Enum):
     GRUNNLAG_OMEROFILE = "GRUNNLAG_OMEROFILE"
     GRUNNLAG_SAMPLE = "GRUNNLAG_SAMPLE"
     GRUNNLAG_REPRESENTATION = "GRUNNLAG_REPRESENTATION"
+    GRUNNLAG_INSTRUMENT = "GRUNNLAG_INSTRUMENT"
     GRUNNLAG_OMERO = "GRUNNLAG_OMERO"
     GRUNNLAG_METRIC = "GRUNNLAG_METRIC"
     GRUNNLAG_THUMBNAIL = "GRUNNLAG_THUMBNAIL"
@@ -58,6 +60,29 @@ class OmeroFileType(str, Enum):
     "Zeiss Microscopy File"
     UNKNOWN = "UNKNOWN"
     "Unwknon File Format"
+
+
+class ROIType(str, Enum):
+    """An enumeration."""
+
+    ELLIPSE = "ELLIPSE"
+    "Ellipse"
+    POLYGON = "POLYGON"
+    "POLYGON"
+    LINE = "LINE"
+    "Line"
+    RECTANGLE = "RECTANGLE"
+    "Rectangle"
+    PATH = "PATH"
+    "Path"
+    UNKNOWN = "UNKNOWN"
+    "Unknown"
+    FRAME = "FRAME"
+    "Frame"
+    SLICE = "SLICE"
+    "Slice"
+    POINT = "POINT"
+    "Point"
 
 
 class RepresentationVariety(str, Enum):
@@ -86,32 +111,12 @@ class RepresentationVarietyInput(str, Enum):
     "Unknown"
 
 
-class ROIType(str, Enum):
-    """An enumeration."""
-
-    ELLIPSE = "ELLIPSE"
-    "Ellipse"
-    POLYGON = "POLYGON"
-    "POLYGON"
-    LINE = "LINE"
-    "Line"
-    RECTANGLE = "RECTANGLE"
-    "Rectangle"
-    PATH = "PATH"
-    "Path"
-    UNKNOWN = "UNKNOWN"
-    "Unknown"
-
-
-class PandasDType(str, Enum):
-    OBJECT = "OBJECT"
-    INT64 = "INT64"
-    FLOAT64 = "FLOAT64"
-    BOOL = "BOOL"
-    CATEGORY = "CATEGORY"
-    DATETIME65 = "DATETIME65"
-    TIMEDELTA = "TIMEDELTA"
-    UNICODE = "UNICODE"
+class Medium(str, Enum):
+    AIR = "AIR"
+    GLYCEROL = "GLYCEROL"
+    OIL = "OIL"
+    OTHER = "OTHER"
+    WATER = "WATER"
 
 
 class RoiTypeInput(str, Enum):
@@ -129,6 +134,23 @@ class RoiTypeInput(str, Enum):
     "Path"
     UNKNOWN = "UNKNOWN"
     "Unknown"
+    FRAME = "FRAME"
+    "Frame"
+    SLICE = "SLICE"
+    "Slice"
+    POINT = "POINT"
+    "Point"
+
+
+class PandasDType(str, Enum):
+    OBJECT = "OBJECT"
+    INT64 = "INT64"
+    FLOAT64 = "FLOAT64"
+    BOOL = "BOOL"
+    CATEGORY = "CATEGORY"
+    DATETIME65 = "DATETIME65"
+    TIMEDELTA = "TIMEDELTA"
+    UNICODE = "UNICODE"
 
 
 class DescendendInput(BaseModel):
@@ -164,14 +186,24 @@ class OmeroRepresentationInput(BaseModel):
     physical_size: Optional["PhysicalSizeInput"] = Field(alias="physicalSize")
     scale: Optional[List[Optional[float]]]
     acquisition_date: Optional[datetime] = Field(alias="acquisitionDate")
+    objective_settings: Optional["ObjectiveSettingsInput"] = Field(
+        alias="objectiveSettings"
+    )
+    imaging_environment: Optional["ImagingEnvironmentInput"] = Field(
+        alias="imagingEnvironment"
+    )
+    instrument: Optional[ID]
 
 
 class PlaneInput(BaseModel):
-    z_index: Optional[int] = Field(alias="zIndex")
-    y_index: Optional[int] = Field(alias="yIndex")
-    x_index: Optional[int] = Field(alias="xIndex")
-    c_index: Optional[int] = Field(alias="cIndex")
-    t_index: Optional[int] = Field(alias="tIndex")
+    z: Optional[int]
+    y: Optional[int]
+    x: Optional[int]
+    c: Optional[int]
+    t: Optional[int]
+    position_x: Optional[float] = Field(alias="positionX")
+    position_y: Optional[float] = Field(alias="positionY")
+    position_z: Optional[float] = Field(alias="positionZ")
     exposure_time: Optional[float] = Field(alias="exposureTime")
     delta_t: Optional[float] = Field(alias="deltaT")
 
@@ -185,11 +217,26 @@ class ChannelInput(BaseModel):
 
 
 class PhysicalSizeInput(BaseModel):
-    x: Optional[int]
-    y: Optional[int]
-    z: Optional[int]
-    t: Optional[int]
-    c: Optional[int]
+    x: Optional[float]
+    y: Optional[float]
+    z: Optional[float]
+    t: Optional[float]
+    c: Optional[float]
+
+
+class ObjectiveSettingsInput(BaseModel):
+    correction_collar: Optional[float] = Field(alias="correctionCollar")
+    medium: Optional[Medium]
+    numerical_aperture: Optional[float] = Field(alias="numericalAperture")
+    working_distance: Optional[float] = Field(alias="workingDistance")
+
+
+class ImagingEnvironmentInput(BaseModel):
+    air_pessure: Optional[float] = Field(alias="airPessure")
+    co2_percent: Optional[float] = Field(alias="co2Percent")
+    humidity: Optional[float]
+    temperature: Optional[float]
+    map: Optional[Dict]
 
 
 class InputVector(BaseModel, Vectorizable):
@@ -263,13 +310,13 @@ class RepresentationFragmentOmero(BaseModel):
 class RepresentationFragment(Representation, BaseModel):
     typename: Optional[Literal["Representation"]] = Field(alias="__typename")
     sample: Optional[RepresentationFragmentSample]
-    "The Sample this representation belongs to"
+    "The Sample this representation belosngs to"
     type: Optional[str]
     "The Representation can have varying types, consult your API"
     id: ID
     store: Optional[Store]
     variety: RepresentationVariety
-    "The Representation can have varying types, consult your API"
+    "The Representation can have vasrying types, consult your API"
     name: Optional[str]
     "Cleartext name"
     omero: Optional[RepresentationFragmentOmero]
@@ -296,7 +343,7 @@ class RepresentationAndMaskFragmentDerived(Representation, BaseModel):
     id: ID
     store: Optional[Store]
     variety: RepresentationVariety
-    "The Representation can have varying types, consult your API"
+    "The Representation can have vasrying types, consult your API"
     name: Optional[str]
     "Cleartext name"
 
@@ -309,13 +356,13 @@ class RepresentationAndMaskFragmentOmero(BaseModel):
 class RepresentationAndMaskFragment(Representation, BaseModel):
     typename: Optional[Literal["Representation"]] = Field(alias="__typename")
     sample: Optional[RepresentationAndMaskFragmentSample]
-    "The Sample this representation belongs to"
+    "The Sample this representation belosngs to"
     type: Optional[str]
     "The Representation can have varying types, consult your API"
     id: ID
     store: Optional[Store]
     variety: RepresentationVariety
-    "The Representation can have varying types, consult your API"
+    "The Representation can have vasrying types, consult your API"
     name: Optional[str]
     "Cleartext name"
     derived: Optional[List[Optional[RepresentationAndMaskFragmentDerived]]]
@@ -340,7 +387,7 @@ class ListRepresentationFragment(Representation, BaseModel):
     name: Optional[str]
     "Cleartext name"
     sample: Optional[ListRepresentationFragmentSample]
-    "The Sample this representation belongs to"
+    "The Sample this representation belosngs to"
 
 
 class ROIFragmentVectors(BaseModel):

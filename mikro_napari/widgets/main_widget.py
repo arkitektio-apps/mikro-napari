@@ -10,15 +10,11 @@ from mikro.api.schema import (
     RepresentationVariety,
     Search_representationQuery,
     afrom_xarray,
+    RepresentationFragment,
     aget_roi,
     from_xarray,
 )
-from mikro_napari.api.schema import (
-    ROIFragment,
-    RepresentationFragment,
-    Search_roisQuery,
-    aget_representation,
-)
+import mikro
 from qtpy import QtWidgets
 from qtpy import QtCore
 from arkitekt.apps.connected import ConnectedApp
@@ -62,60 +58,21 @@ MULTISCALE_REPRESENTATIONS = SearchWidget(
     ward="mikro",
 )
 
-stregistry = StructureRegistry()
-
-
-stregistry.register_as_structure(
-    RepresentationFragment,
-    "@mikro/representation",
-    aget_representation,
-    default_widget=SearchWidget(
-        query=Search_representationQuery.Meta.document, ward="mikro"
-    ),
-)
-
-stregistry.register_as_structure(
-    ROIFragment,
-    "@mikro/roi",
-    aget_roi,
-    default_widget=SearchWidget(query=Search_roisQuery.Meta.document, ward="mikro"),
-)
-
 
 class MikroNapariWidget(QtWidgets.QWidget):
     emit_image: QtCore.Signal = QtCore.Signal(object)
 
-    def __init__(
-        self, viewer: napari.Viewer, app: ConnectedApp = None, *args, **kwargs
-    ):
+    def __init__(self, viewer: napari.Viewer, app: ConnectedApp, *args, **kwargs):
         super(MikroNapariWidget, self).__init__(*args, **kwargs)
 
         self.viewer = viewer
 
         self.mylayout = QtWidgets.QVBoxLayout()
 
-        self.app = app or ConnectedApp(
-            koil=QtPedanticKoil(uvify=False),
-            rekuest=ArkitektRekuest(structure_registry=stregistry),
-            fakts=Fakts(
-                subapp="napari",
-                grant=FailsafeGrant(
-                    grants=[
-                        PublicRedirectGrant(name="Napari", scopes=["openid"]),
-                    ]
-                ),
-                assert_groups={"mikro", "arkitekt"},
-            ),
-            herre=FaktsHerre(),
-        )
-
-        self.app.koil.parent = self
-
+        self.app = app
         self.viewer.window.app = self.app
 
         self.representation_controller = RepresentationQtModel(self)
-
-        self.app.enter()
 
         self.magic_bar = MagicBar(self.app, dark_mode=True)
         self.magic_bar.app_up.connect(self.on_app_up)
@@ -152,6 +109,15 @@ class MikroNapariWidget(QtWidgets.QWidget):
         self.app.rekuest.register(builder=QtInLoopActorBuilder(), interfaces=["show"])(
             self.representation_controller.on_image_loaded
         )
+        self.app.rekuest.register(builder=QtInLoopActorBuilder(), interfaces=["show"])(
+            self.representation_controller.open_feature
+        )
+        self.app.rekuest.register(builder=QtInLoopActorBuilder(), interfaces=["show"])(
+            self.representation_controller.open_metric
+        )
+        self.app.rekuest.register(builder=QtInLoopActorBuilder(), interfaces=["show"])(
+            self.representation_controller.open_label
+        )
 
         self.app.rekuest.register(builder=QtInLoopActorBuilder(), interfaces=["show"])(
             self.representation_controller.tile_images
@@ -169,7 +135,6 @@ class MikroNapariWidget(QtWidgets.QWidget):
         self.open_image_button.setEnabled(False)
 
     def on_selection_changed(self):
-        print("Selection Changed")
         self.active_non_mikro_layers = [
             layer
             for layer in self.viewer.layers.selection
@@ -181,7 +146,6 @@ class MikroNapariWidget(QtWidgets.QWidget):
             if layer.metadata.get("mikro")
         ]
 
-        print(self.active_mikro_layers, self.active_mikro_layers)
         if self.active_non_mikro_layers and not self.active_mikro_layers:
             self.upload_image_button.setText(f"Upload Layer")
             self.upload_image_button.setEnabled(self.magic_bar.state == AppState.UP)
@@ -258,7 +222,6 @@ class MikroNapariWidget(QtWidgets.QWidget):
 
         rep_dialog = OpenImageDialog(self)
         x = rep_dialog.exec()
-        print(x)
         if x:
             self.representation_controller.active_representation = (
                 rep_dialog.selected_representation
