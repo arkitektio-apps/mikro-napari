@@ -12,7 +12,6 @@ fragment Representation on Representation {
     id
     name
   }
-  type
   id
   store
   variety
@@ -27,7 +26,6 @@ fragment RepresentationAndMask on Representation {
     id
     name
   }
-  type
   id
   store
   variety
