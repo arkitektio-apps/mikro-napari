@@ -3,3 +3,16 @@ query get_rois($representation: ID!, $type: [RoiTypeInput]) {
     ...ROI
   }
 }
+
+query get_roi($id: ID!) {
+  roi(id: $id) {
+    ...ROI
+  }
+}
+
+query search_rois($search: String!) {
+  rois(repname: $search) {
+    label: id
+    value: id
+  }
+}

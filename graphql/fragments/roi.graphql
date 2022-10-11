@@ -4,6 +4,8 @@ fragment ROI on ROI {
     x
     y
     z
+    t
+    c
   }
   type
   representation {

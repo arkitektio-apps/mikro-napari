@@ -12,11 +12,33 @@ fragment Representation on Representation {
     id
     name
   }
-  type
   id
   store
   variety
   name
+  omero {
+    scale
+  }
+}
+
+fragment RepresentationAndMask on Representation {
+  sample {
+    id
+    name
+  }
+  id
+  store
+  variety
+  name
+  derived(variety: MASK) {
+    id
+    store
+    variety
+    name
+  }
+  omero {
+    scale
+  }
 }
 
 fragment ListRepresentation on Representation {

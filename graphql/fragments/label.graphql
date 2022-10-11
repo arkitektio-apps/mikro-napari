@@ -4,6 +4,7 @@ fragment DetailLabel on Label {
   name
   features {
     id
-    size
+    key
+    value
   }
 }

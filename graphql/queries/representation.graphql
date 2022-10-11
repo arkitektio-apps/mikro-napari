@@ -10,6 +10,12 @@ query get_representation($id: ID!) {
   }
 }
 
+query get_representation_and_mask($id: ID!) {
+  representation(id: $id) {
+    ...RepresentationAndMask
+  }
+}
+
 query get_some_representations {
   representations(limit: 10, order: "-created_at") {
     ...ListRepresentation
