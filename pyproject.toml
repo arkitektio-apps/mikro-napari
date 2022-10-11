@@ -1,16 +1,18 @@
 [tool.poetry]
 name = "mikro-napari"
-version = "0.1.43"
-description = ""
+version = "0.1.44"
+description = "A napari plugin to interact and provide functionality for a connected arkitekt server"
+readme = "README.md"
+repository = "https://github.com/jhnnsrs/mikro-napari"
 authors = ["jhnnsrs <jhnnsrs@gmail.com>"]
 license = "CC BY-NC 3.0"
-packages = [{include = "mikro_napari"}]
+packages = [{ include = "mikro_napari" }]
+classifiers = ["Framework :: napari"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-arkitekt = "0.2.7"
-mikro = "0.2.4"
-napari-plugin_engine = "^0.1.4"
+arkitekt = "^0.3.7"
+koil = "0.2.8"
 
 
 [tool.poetry.scripts]
@@ -21,18 +23,17 @@ pytest = "^6.2.5"
 pytest-aiohttp = "^0.3.0"
 pytest-cov = "^3.0.0"
 black = "^21.12b0"
-napari = "^0.4.15"
+napari = "^0.4.16"
 PyQt5 = "^5.15.6"
 testcontainers = "^3.5.3"
-pydoc-markdown = "4.5.0"
 
-[tool.poetry.plugins."napari.plugin"]
-mikro-napari  = "mikro_napari.plugin"
+[tool.poetry.plugins."napari.manifest"]
+mikro-napari = "mikro_napari:napari.yaml"
 
 
 [[tool.pydoc-markdown.loaders]]
 type = "python"
-search_path = [ "mikro_napari" ]
+search_path = ["mikro_napari"]
 
 [tool.pydoc-markdown.renderer]
 type = "docusaurus"
@@ -40,7 +41,7 @@ docs_base_path = "website/docs"
 
 
 [tool.pytest.ini_options]
-qt_api="pyqt5"
+qt_api = "pyqt5"
 markers = [
     "integration: marks tests that require a running server",
     "qt: marks tests that require a running qt application",

@@ -8,14 +8,17 @@ arkitekt:
   secure: false
   ws_endpoint_url: ws://localhost:8090/graphql
 fluss:
+  datalayer:
+    endpoint_url: http://localhost:9000
+    secure: false
   endpoint_url: http://localhost:8070/graphql
   healthz: http://localhost:8070/ht
   secure: false
   ws_endpoint_url: ws://localhost:8070/graphql
 herre:
   base_url: http://localhost:8000/o
-  client_id: cR2jtrgzFRxY5bI1GQ6CLfkkcb2Ofwi5cxkt31ue
-  client_secret: f0da5ade-7d6a-419e-8e55-2676cb971d8d
+  client_id: lfleO3XRqjExiQmFX6PSStUpgJDi2gJglt9KoTUS
+  client_secret: 2fd168c1-4aea-418b-a467-4f86db1602c7
   endpoint_url: http://localhost:8000/graphql
   grant_type: authorization-code
   healthz: http://localhost:8000/ht
@@ -24,7 +27,6 @@ herre:
   - openid
   - can_assign
   - can_create
-  - can_create_identifier
   secure: false
   ws_endpoint_url: ws://localhost:8000/graphql
 mikro:
