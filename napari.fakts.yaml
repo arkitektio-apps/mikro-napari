@@ -1,44 +1,42 @@
 arkitekt:
   agent:
-    endpoint_url: ws://localhost:8090/agi/
-  endpoint_url: http://localhost:8090/graphql
-  healthz: http://localhost:8090/ht
+    endpoint_url: ws://10.144.196.43:8090/agi/
+  endpoint_url: http://10.144.196.43:8090/graphql
+  healthz: http://10.144.196.43:8090/ht
   postman:
-    endpoint_url: ws://localhost:8090/watchi/
+    endpoint_url: ws://10.144.196.43:8090/watchi/
   secure: false
-  ws_endpoint_url: ws://localhost:8090/graphql
+  ws_endpoint_url: ws://10.144.196.43:8090/graphql
 fluss:
   datalayer:
-    endpoint_url: http://localhost:9000
+    endpoint_url: http://10.144.196.43:9000
     secure: false
-  endpoint_url: http://localhost:8070/graphql
-  healthz: http://localhost:8070/ht
+  endpoint_url: http://10.144.196.43:8070/graphql
+  healthz: http://10.144.196.43:8070/ht
   secure: false
-  ws_endpoint_url: ws://localhost:8070/graphql
+  ws_endpoint_url: ws://10.144.196.43:8070/graphql
 herre:
-  base_url: http://localhost:8000/o
-  client_id: lfleO3XRqjExiQmFX6PSStUpgJDi2gJglt9KoTUS
-  client_secret: 2fd168c1-4aea-418b-a467-4f86db1602c7
-  endpoint_url: http://localhost:8000/graphql
+  base_url: http://10.144.196.43:8000/o
+  client_id: QjXZ64Ucilkh9gHw70DfxGDYa2Z0IHvF78r3AyOH
+  client_secret: 872aa549-6412-45f9-afe0-6501d97355f7
+  endpoint_url: http://10.144.196.43:8000/graphql
   grant_type: authorization-code
-  healthz: http://localhost:8000/ht
+  healthz: http://10.144.196.43:8000/ht
   name: Napari
   scopes:
   - openid
-  - can_assign
-  - can_create
   secure: false
-  ws_endpoint_url: ws://localhost:8000/graphql
+  ws_endpoint_url: ws://10.144.196.43:8000/graphql
 mikro:
   datalayer:
-    endpoint_url: http://localhost:9000
+    endpoint_url: http://10.144.196.43:9000
     secure: false
-  endpoint_url: http://localhost:8080/graphql
-  healthz: http://localhost:8080/ht
+  endpoint_url: http://10.144.196.43:8080/graphql
+  healthz: http://10.144.196.43:8080/ht
   secure: false
-  ws_endpoint_url: ws://localhost:8080/graphql
+  ws_endpoint_url: ws://10.144.196.43:8080/graphql
 port:
-  endpoint_url: http://localhost:8050/graphql
-  healthz: http://localhost:8050/ht
+  endpoint_url: http://10.144.196.43:8050/graphql
+  healthz: http://10.144.196.43:8050/ht
   secure: false
-  ws_endpoint_url: ws://localhost:8050/graphql
+  ws_endpoint_url: ws://10.144.196.43:8050/graphql

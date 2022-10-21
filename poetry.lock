@@ -84,18 +84,17 @@ python-versions = "*"
 
 [[package]]
 name = "arkitekt"
-version = "0.3.7"
+version = "0.3.8"
 description = "rpc and node backbone"
 category = "main"
 optional = false
 python-versions = ">=3.8,<4.0"
 
 [package.dependencies]
-fakts = "0.2.10"
+fakts = ">=0.2.10,<0.3.0"
 herre = ">=0.2.7,<0.3.0"
-mikro = "0.2.23"
-rath = "0.2.9"
-rekuest = "0.0.17"
+mikro = ">=0.2.24,<0.3.0"
+rekuest = ">=0.0.17,<0.0.18"
 
 [[package]]
 name = "asciitree"
@@ -810,7 +809,7 @@ python-versions = ">=3.7"
 
 [[package]]
 name = "koil"
-version = "0.2.6"
+version = "0.2.8"
 description = "Async for a sync world"
 category = "main"
 optional = false
@@ -874,7 +873,7 @@ traitlets = "*"
 
 [[package]]
 name = "mikro"
-version = "0.2.23"
+version = "0.2.24"
 description = "images for arkitekt"
 category = "main"
 optional = false
@@ -884,7 +883,7 @@ python-versions = ">=3.8,<4.0"
 dask = ">=2022.2.1,<2023.0.0"
 pandas = ">=1.3.4,<2.0.0"
 pyarrow = ">=6.0.1,<7.0.0"
-rath = ">=0.2.8,<0.3.0"
+rath = ">=0.2.10,<0.3.0"
 s3fs = ">=2022.2.0,<2023.0.0"
 websockets = ">=10.2,<11.0"
 xarray = ">=2022.3.0,<2023.0.0"
@@ -1604,7 +1603,7 @@ test = ["pytest (>=6,!=7.0.0,!=7.0.1)", "pytest-cov (>=3.0.0)", "pytest-qt"]
 
 [[package]]
 name = "rath"
-version = "0.2.9"
+version = "0.2.10"
 description = "aiohttp powered apollo like graphql client"
 category = "main"
 optional = false
@@ -1613,7 +1612,7 @@ python-versions = ">=3.7,<4.0"
 [package.dependencies]
 aiohttp = ">=3.8.1,<4.0.0"
 graphql-core = ">=3.2.0,<4.0.0"
-koil = "0.2.6"
+koil = ">=0.2.8,<0.3.0"
 pydantic = ">=1.9.0,<2.0.0"
 
 [package.extras]
@@ -2161,7 +2160,7 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "4e8b2c6a6503920245ab2ec23b5d642b9fd02a2f716c4cd696e56715510964a9"
+content-hash = "5da68e009baa2c34c0cf1aa4f6a6a68f5d774e73bdb47f51a41470e39caf4b2b"
 
 [metadata.files]
 aiobotocore = [
@@ -2278,8 +2277,8 @@ appnope = [
     {file = "appnope-0.1.3.tar.gz", hash = "sha256:02bd91c4de869fbb1e1c50aafc4098827a7a54ab2f39d9dcba6c9547ed920e24"},
 ]
 arkitekt = [
-    {file = "arkitekt-0.3.7-py3-none-any.whl", hash = "sha256:c02f182639700b048282f6cf8c45472678384117b85f918f635154b08aa6ebd2"},
-    {file = "arkitekt-0.3.7.tar.gz", hash = "sha256:be86175385e1877a5032a9e102d55136e4b135aa240d9f39df89c229787737b5"},
+    {file = "arkitekt-0.3.8-py3-none-any.whl", hash = "sha256:4bab0ac4ac06cb15e25ab596ef1da016443f9c9c8b635b809e63f1fc43012e07"},
+    {file = "arkitekt-0.3.8.tar.gz", hash = "sha256:5dcee89d51fe745ffc14b3edf2c65f2e7da99a265c7aa6b2e341b1448df1f635"},
 ]
 asciitree = [
     {file = "asciitree-0.3.3.tar.gz", hash = "sha256:4aa4b9b649f85e3fcb343363d97564aa1fb62e249677f2e18a96765145cc0f6e"},
@@ -2754,8 +2753,8 @@ kiwisolver = [
     {file = "kiwisolver-1.4.4.tar.gz", hash = "sha256:d41997519fcba4a1e46eb4a2fe31bc12f0ff957b2b81bac28db24744f333e955"},
 ]
 koil = [
-    {file = "koil-0.2.6-py3-none-any.whl", hash = "sha256:53ef342e5824b4a112c16748b424cac70cb70cd35f37f01d82c7dab25ec2836b"},
-    {file = "koil-0.2.6.tar.gz", hash = "sha256:17a6bdf64ebbfc3cb137f0015dc3f33459c53536cde68a5cc913a5a20124cc44"},
+    {file = "koil-0.2.8-py3-none-any.whl", hash = "sha256:a1ef840dfe91c693df8d466f6a91675ffbf6e9384b670c0e9ba3ff2de74ac6e3"},
+    {file = "koil-0.2.8.tar.gz", hash = "sha256:050662bb601a3a4bb987c085c76154d26109020d3a80573fca1412e569ed0110"},
 ]
 locket = [
     {file = "locket-1.0.0-py2.py3-none-any.whl", hash = "sha256:b6c819a722f7b6bd955b80781788e4a66a55628b858d347536b7e81325a3a5e3"},
@@ -2812,8 +2811,8 @@ matplotlib-inline = [
     {file = "matplotlib_inline-0.1.6-py3-none-any.whl", hash = "sha256:f1f41aab5328aa5aaea9b16d083b128102f8712542f819fe7e6a420ff581b311"},
 ]
 mikro = [
-    {file = "mikro-0.2.23-py3-none-any.whl", hash = "sha256:02c823a3b30e15857c795686431dcec6636edf99b5a2e1d3e20243bf085124ef"},
-    {file = "mikro-0.2.23.tar.gz", hash = "sha256:18f2ba9b2e4495f56ec297adafc39270823586bc7b88f2571fb39c7877f0d0bf"},
+    {file = "mikro-0.2.24-py3-none-any.whl", hash = "sha256:46cc710bc1c254757ca64eca3cf5359814ca1efa6f5fa75e4a012566c0f98ca1"},
+    {file = "mikro-0.2.24.tar.gz", hash = "sha256:266a58a916dd12e4b3abc0f1c5ae1c5e8873fcab900f9e7453a3b9d46d318346"},
 ]
 multidict = [
     {file = "multidict-6.0.2-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:0b9e95a740109c6047602f4db4da9949e6c5945cefbad34a1299775ddc9a62e2"},
@@ -3557,8 +3556,8 @@ QtPy = [
     {file = "QtPy-2.2.1.tar.gz", hash = "sha256:7d5231133b772e40b4ee514b6673aca558331e4b88ca038b26c9e16c5c95524f"},
 ]
 rath = [
-    {file = "rath-0.2.9-py3-none-any.whl", hash = "sha256:649d9bd442af9a9d9c9cda24e820a1649b552a3226c31017e28645ea1a0782e9"},
-    {file = "rath-0.2.9.tar.gz", hash = "sha256:609f12e611450801c8451687115b47ea83e62784f8217aa985d675ae528375ab"},
+    {file = "rath-0.2.10-py3-none-any.whl", hash = "sha256:e24f3bd7dd234fb1c4eecfe9d217d3d0c65873f3e1b8b290cae66697d434edb9"},
+    {file = "rath-0.2.10.tar.gz", hash = "sha256:307f5ace39de1df86b399f1e8c90728af6274c390d0c55ed11c3f01f11ee75ad"},
 ]
 rekuest = [
     {file = "rekuest-0.0.17-py3-none-any.whl", hash = "sha256:2c4c1dae810c51f3d1c5009a5f5042e41d449f7a7b0dd91f8ddcf71e6220a70a"},

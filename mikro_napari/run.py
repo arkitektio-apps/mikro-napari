@@ -1,5 +1,9 @@
 from arkitekt.apps.connected import ConnectedApp
 from arkitekt.apps.rekuest import ArkitektRekuest
+from fakts.discovery.qt.selectable_beacon import (
+    QtSelectableDiscovery,
+    SelectBeaconWidget,
+)
 from fakts.fakts import Fakts
 from fakts.grants.meta.failsafe import FailsafeGrant
 from fakts.grants.remote.public_redirect_grant import PublicRedirectGrant
@@ -23,7 +27,13 @@ def main(**kwargs):
             subapp="napari",
             grant=FailsafeGrant(
                 grants=[
-                    PublicRedirectGrant(name="Napari", scopes=["openid"]),
+                    PublicRedirectGrant(
+                        name="Napari",
+                        scopes=["openid"],
+                        discovery=QtSelectableDiscovery(
+                            widget=SelectBeaconWidget(parent=viewer.window.qt_viewer)
+                        ),
+                    ),
                 ]
             ),
             assert_groups={"mikro", "arkitekt"},
