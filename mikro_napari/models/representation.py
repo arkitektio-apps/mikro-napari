@@ -200,12 +200,13 @@ class RepresentationQtModel(QtCore.QObject):
         self.active_representation = get_representation(metric.rep.id)
 
     def open_label(self, label: LabelFragment):
-        """Show on Napari
+        """Show Label
 
-        Loads the label into the viewer
+        Loads the label and its corresponding image into the viewer, highlighting the active
+        label in a different color, but showing all labels
 
         Args:
-            rep (RepresentationFragment): The Image
+            label (RepresentationFragment): The label to show
         """
         self.active_representation = get_representation(label.representation.id)
 

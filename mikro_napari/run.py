@@ -1,4 +1,5 @@
 from arkitekt.apps.connected import ConnectedApp
+from arkitekt.apps.fakts import ArkitektFakts
 from arkitekt.apps.rekuest import ArkitektRekuest
 from fakts.discovery.qt.selectable_beacon import (
     QtSelectableDiscovery,
@@ -23,7 +24,7 @@ def main(**kwargs):
 
     app = ConnectedApp(
         rekuest=ArkitektRekuest(),
-        fakts=Fakts(
+        fakts=ArkitektFakts(
             subapp="napari",
             grant=FailsafeGrant(
                 grants=[
@@ -36,7 +37,7 @@ def main(**kwargs):
                     ),
                 ]
             ),
-            assert_groups={"mikro", "arkitekt"},
+            assert_groups={"mikro", "rekuest"},
         ),
         herre=FaktsHerre(),
     )

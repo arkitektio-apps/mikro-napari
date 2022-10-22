@@ -1,3 +1,4 @@
+from arkitekt.apps.fakts import ArkitektFakts
 from mikro_napari.widgets.main_widget import MikroNapariWidget
 from arkitekt.apps.connected import ConnectedApp
 from arkitekt.apps.rekuest import ArkitektRekuest
@@ -11,33 +12,31 @@ from fakts.discovery.qt.selectable_beacon import (
     SelectBeaconWidget,
 )
 
-class ArkitektPluginWidget(MikroNapariWidget):
 
-    def __init__(self, viewer: 'napari.viewer.Viewer'):
+class ArkitektPluginWidget(MikroNapariWidget):
+    def __init__(self, viewer: "napari.viewer.Viewer"):
 
         x = SelectBeaconWidget()
 
         app = ConnectedApp(
             koil=QtPedanticKoil(parent=self),
             rekuest=ArkitektRekuest(),
-            fakts=Fakts(
+            fakts=ArkitektFakts(
                 subapp="napari",
                 grant=FailsafeGrant(
                     grants=[
-                        PublicRedirectGrant(name="Napari", scopes=["openid"],discovery=QtSelectableDiscovery(
-                            widget=x
-                        )),
+                        PublicRedirectGrant(
+                            name="Napari",
+                            scopes=["openid"],
+                            discovery=QtSelectableDiscovery(widget=x),
+                        ),
                     ]
                 ),
-                assert_groups={"mikro", "arkitekt"},
+                assert_groups={"mikro", "rekuest"},
             ),
             herre=FaktsHerre(),
         )
 
-
         super(ArkitektPluginWidget, self).__init__(viewer, app)
 
         app.enter()
-
-
-
