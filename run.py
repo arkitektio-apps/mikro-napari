@@ -5,4 +5,5 @@ import logging
 
 logging.basicConfig(level="INFO", handlers=[RichHandler()])
 
-main()
+if __name__ == "__main__":
+    main()

@@ -1,42 +1,49 @@
 arkitekt:
   agent:
-    endpoint_url: ws://10.144.196.43:8090/agi/
-  endpoint_url: http://10.144.196.43:8090/graphql
-  healthz: http://10.144.196.43:8090/ht
+    endpoint_url: wss://rekuest-sibarita.iins.u-bordeaux.fr/agi/
+  endpoint_url: https://rekuest-sibarita.iins.u-bordeaux.fr/graphql
+  healthz: https://rekuest-sibarita.iins.u-bordeaux.fr/ht
   postman:
-    endpoint_url: ws://10.144.196.43:8090/watchi/
+    endpoint_url: wss://rekuest-sibarita.iins.u-bordeaux.fr/watchi/
   secure: false
-  ws_endpoint_url: ws://10.144.196.43:8090/graphql
+  ws_endpoint_url: wss://rekuest-sibarita.iins.u-bordeaux.fr/graphql
 fluss:
   datalayer:
-    endpoint_url: http://10.144.196.43:9000
+    endpoint_url: https://fluss-sibarita.iins.u-bordeaux.fr
     secure: false
-  endpoint_url: http://10.144.196.43:8070/graphql
-  healthz: http://10.144.196.43:8070/ht
+  endpoint_url: https://fluss-sibarita.iins.u-bordeaux.fr/graphql
+  healthz: https://fluss-sibarita.iins.u-bordeaux.fr/ht
   secure: false
-  ws_endpoint_url: ws://10.144.196.43:8070/graphql
+  ws_endpoint_url: wss://fluss-sibarita.iins.u-bordeaux.fr/graphql
 herre:
-  base_url: http://10.144.196.43:8000/o
-  client_id: QjXZ64Ucilkh9gHw70DfxGDYa2Z0IHvF78r3AyOH
-  client_secret: 872aa549-6412-45f9-afe0-6501d97355f7
-  endpoint_url: http://10.144.196.43:8000/graphql
+  base_url: https://lok-sibarita.iins.u-bordeaux.fr/o
+  client_id: go8CAE78FDf4eLsOSk4wkR4usYbsamcq0yTYqBiY
+  client_secret: oO4eJgvv41Nkr9EaNAmZ5YI4WGgfJznUMW5ReGIcI6NsSXZiud3w3y2yGxdMf2WhEMdUKD6MMalLv1rlM8d6h5Q6vJR9vLbaKSHj2V5RpDrNVUWnJ1s2OmxiPSR6qoNH
+  endpoint_url: https://lok-sibarita.iins.u-bordeaux.fr/graphql
   grant_type: authorization-code
-  healthz: http://10.144.196.43:8000/ht
+  healthz: https://lok-sibarita.iins.u-bordeaux.fr/ht
   name: Napari
-  scopes:
-  - openid
+  scopes: []
   secure: false
-  ws_endpoint_url: ws://10.144.196.43:8000/graphql
+  ws_endpoint_url: wss://lok-sibarita.iins.u-bordeaux.fr/graphql
 mikro:
   datalayer:
-    endpoint_url: http://10.144.196.43:9000
+    endpoint_url: https://minio-sibarita.iins.u-bordeaux.fr
     secure: false
-  endpoint_url: http://10.144.196.43:8080/graphql
-  healthz: http://10.144.196.43:8080/ht
+  endpoint_url: https://mikro-sibarita.iins.u-bordeaux.fr/graphql
+  healthz: https://mikro-sibarita.iins.u-bordeaux.fr/ht
   secure: false
-  ws_endpoint_url: ws://10.144.196.43:8080/graphql
+  ws_endpoint_url: wss://mikro-sibarita.iins.u-bordeaux.fr/graphql
 port:
-  endpoint_url: http://10.144.196.43:8050/graphql
-  healthz: http://10.144.196.43:8050/ht
+  endpoint_url: https://fluss-sibarita.iins.u-bordeaux.fr/graphql
+  healthz: https://fluss-sibarita.iins.u-bordeaux.fr/ht
   secure: false
-  ws_endpoint_url: ws://10.144.196.43:8050/graphql
+rekuest:
+  agent:
+    endpoint_url: wss://rekuest-sibarita.iins.u-bordeaux.fr/agi/
+  endpoint_url: https://rekuest-sibarita.iins.u-bordeaux.fr/graphql
+  healthz: https://rekuest-sibarita.iins.u-bordeaux.fr/ht
+  postman:
+    endpoint_url: wss://rekuest-sibarita.iins.u-bordeaux.fr/watchi/
+  secure: false
+  ws_endpoint_url: wss://rekuest-sibarita.iins.u-bordeaux.fr/graphql

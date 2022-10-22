@@ -8,6 +8,7 @@ from fakts.discovery.qt.selectable_beacon import (
 from fakts.fakts import Fakts
 from fakts.grants.meta.failsafe import FailsafeGrant
 from fakts.grants.remote.public_redirect_grant import PublicRedirectGrant
+from fakts.grants.remote.claim import ClaimGrant
 from herre.fakts.herre import FaktsHerre
 from koil.composition.qt import QtPedanticKoil
 from mikro_napari.widgets.main_widget import MikroNapariWidget
@@ -17,9 +18,15 @@ import argparse
 from skimage.data import astronaut
 
 from mikro_napari.widgets.sidebar.sidebar import SidebarWidget
-
+import os
 
 def main(**kwargs):
+
+    os.environ["NAPARI_ASYNC"] = "1"
+
+
+
+
     viewer = napari.Viewer()
 
     app = ConnectedApp(
@@ -28,6 +35,11 @@ def main(**kwargs):
             subapp="napari",
             grant=FailsafeGrant(
                 grants=[
+                    ClaimGrant(
+                        client_id="go8CAE78FDf4eLsOSk4wkR4usYbsamcq0yTYqBiY",
+                        client_secret="oO4eJgvv41Nkr9EaNAmZ5YI4WGgfJznUMW5ReGIcI6NsSXZiud3w3y2yGxdMf2WhEMdUKD6MMalLv1rlM8d6h5Q6vJR9vLbaKSHj2V5RpDrNVUWnJ1s2OmxiPSR6qoNH",
+                        discovery=QtSelectableDiscovery(widget=SelectBeaconWidget(parent=viewer.window.qt_viewer)),
+                    ),
                     PublicRedirectGrant(
                         name="Napari",
                         scopes=["openid"],
