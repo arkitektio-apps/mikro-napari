@@ -24,9 +24,6 @@ def main(**kwargs):
 
     os.environ["NAPARI_ASYNC"] = "1"
 
-
-
-
     viewer = napari.Viewer()
 
     app = ConnectedApp(

@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "mikro-napari"
-version = "0.1.47"
-description = "A napari plugin to interact and provide functionality for a connected arkitekt server"
+version = "0.1.49"
+description = "A napari plugin to interact with and provide functionality for a connected arkitekt server"
 readme = "README.md"
 repository = "https://github.com/jhnnsrs/mikro-napari"
 authors = ["jhnnsrs <jhnnsrs@gmail.com>"]
@@ -11,7 +11,7 @@ classifiers = ["Framework :: napari"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-arkitekt = "0.3.14"
+arkitekt = "0.3.16"
 
 
 [tool.poetry.scripts]

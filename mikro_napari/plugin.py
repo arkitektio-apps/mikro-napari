@@ -11,6 +11,7 @@ from fakts.discovery.qt.selectable_beacon import (
     QtSelectableDiscovery,
     SelectBeaconWidget,
 )
+from fakts.grants.remote.claim import ClaimGrant
 
 
 class ArkitektPluginWidget(MikroNapariWidget):
@@ -25,6 +26,11 @@ class ArkitektPluginWidget(MikroNapariWidget):
                 subapp="napari",
                 grant=FailsafeGrant(
                     grants=[
+                        ClaimGrant(
+                            client_id="go8CAE78FDf4eLsOSk4wkR4usYbsamcq0yTYqBiY",
+                            client_secret="oO4eJgvv41Nkr9EaNAmZ5YI4WGgfJznUMW5ReGIcI6NsSXZiud3w3y2yGxdMf2WhEMdUKD6MMalLv1rlM8d6h5Q6vJR9vLbaKSHj2V5RpDrNVUWnJ1s2OmxiPSR6qoNH",
+                            discovery=QtSelectableDiscovery(widget=x),
+                        ),
                         PublicRedirectGrant(
                             name="Napari",
                             scopes=["openid"],
