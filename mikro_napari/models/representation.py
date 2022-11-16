@@ -1,7 +1,7 @@
 from typing import Dict, List, Optional
 from qtpy import QtCore, QtWidgets
 from arkitekt.apps.connected import ConnectedApp
-from koil.qt import QtFuture, QtRunner, QtGeneratorRunner
+from koil.qt import QtFuture, QtGenerator, QtRunner, QtGeneratorRunner
 from mikro.api.schema import (
     InputVector,
     MetricFragment,

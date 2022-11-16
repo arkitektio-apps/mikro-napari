@@ -12,13 +12,14 @@ from fakts.grants.remote.claim import ClaimGrant
 from herre.fakts.herre import FaktsHerre
 from koil.composition.qt import QtPedanticKoil
 from mikro_napari.widgets.main_widget import MikroNapariWidget
-
+from fakts.discovery.static import StaticDiscovery
 import napari
 import argparse
 from skimage.data import astronaut
 
 from mikro_napari.widgets.sidebar.sidebar import SidebarWidget
 import os
+
 
 def main(**kwargs):
 
@@ -33,16 +34,10 @@ def main(**kwargs):
             grant=FailsafeGrant(
                 grants=[
                     ClaimGrant(
-                        client_id="go8CAE78FDf4eLsOSk4wkR4usYbsamcq0yTYqBiY",
+                        identifier="github.io.jhnnsrs.napari",
+                        version="v0.0.1",
                         client_secret="oO4eJgvv41Nkr9EaNAmZ5YI4WGgfJznUMW5ReGIcI6NsSXZiud3w3y2yGxdMf2WhEMdUKD6MMalLv1rlM8d6h5Q6vJR9vLbaKSHj2V5RpDrNVUWnJ1s2OmxiPSR6qoNH",
-                        discovery=QtSelectableDiscovery(widget=SelectBeaconWidget(parent=viewer.window.qt_viewer)),
-                    ),
-                    PublicRedirectGrant(
-                        name="Napari",
-                        scopes=["openid"],
-                        discovery=QtSelectableDiscovery(
-                            widget=SelectBeaconWidget(parent=viewer.window.qt_viewer)
-                        ),
+                        discovery=StaticDiscovery(base_url="http://localhost:8000/f/"),
                     ),
                 ]
             ),

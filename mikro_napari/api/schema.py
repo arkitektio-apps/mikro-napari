@@ -1,12 +1,12 @@
-from typing import Dict, Literal, List, Iterator, Optional, AsyncIterator
-from mikro.scalars import Store, ArrayInput, FeatureValue
-from mikro.funcs import aexecute, asubscribe, execute, subscribe
 from mikro.rath import MikroRath
-from rath.scalars import ID
-from pydantic import BaseModel, Field
-from datetime import datetime
-from mikro.traits import ROI, Representation, Vectorizable
 from enum import Enum
+from mikro.scalars import ArrayInput, Store, FeatureValue
+from pydantic import BaseModel, Field
+from typing import Iterator, Literal, Dict, AsyncIterator, Optional, List
+from mikro.traits import ROI, Representation, Vectorizable
+from mikro.funcs import aexecute, subscribe, asubscribe, execute
+from datetime import datetime
+from rath.scalars import ID
 
 
 class CommentableModels(str, Enum):
@@ -183,7 +183,7 @@ class GroupAssignmentInput(BaseModel):
 class UserAssignmentInput(BaseModel):
     permissions: List[Optional[str]]
     user: str
-    "The user email"
+    "The user id"
 
 
 class OmeroRepresentationInput(BaseModel):
@@ -303,7 +303,7 @@ class ImagingEnvironmentInput(BaseModel):
 
     Follows the OME model for imaging environment"""
 
-    air_pessure: Optional[float] = Field(alias="airPessure")
+    air_pressure: Optional[float] = Field(alias="airPressure")
     "The air pressure during the acquisition"
     co2_percent: Optional[float] = Field(alias="co2Percent")
     "The CO2 percentage in the environment"
