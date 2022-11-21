@@ -11,7 +11,10 @@ from fakts.discovery.qt.selectable_beacon import (
     QtSelectableDiscovery,
     SelectBeaconWidget,
 )
-from fakts.grants.remote.claim import ClaimGrant
+from fakts.grants.remote.static import StaticGrant
+from fakts.grants.remote.retrieve import RetrieveGrant
+from fakts.discovery import StaticDiscovery
+from fakts.grants import CacheGrant
 
 
 class ArkitektPluginWidget(MikroNapariWidget):
@@ -23,20 +26,20 @@ class ArkitektPluginWidget(MikroNapariWidget):
             koil=QtPedanticKoil(parent=self),
             rekuest=ArkitektRekuest(),
             fakts=ArkitektFakts(
-                subapp="napari",
-                grant=FailsafeGrant(
-                    grants=[
-                        ClaimGrant(
-                            client_id="go8CAE78FDf4eLsOSk4wkR4usYbsamcq0yTYqBiY",
-                            client_secret="oO4eJgvv41Nkr9EaNAmZ5YI4WGgfJznUMW5ReGIcI6NsSXZiud3w3y2yGxdMf2WhEMdUKD6MMalLv1rlM8d6h5Q6vJR9vLbaKSHj2V5RpDrNVUWnJ1s2OmxiPSR6qoNH",
-                            discovery=QtSelectableDiscovery(widget=x),
-                        ),
-                        PublicRedirectGrant(
-                            name="Napari",
-                            scopes=["openid"],
-                            discovery=QtSelectableDiscovery(widget=x),
-                        ),
-                    ]
+                grant=CacheGrant(
+                    cache_file="mikro_napari_cache.json",
+                    grant=FailsafeGrant(
+                        grants=[
+                            RetrieveGrant(
+                                identifier="jhnnsrs.github.io/mikro_napari",
+                                version="v0.0.1",
+                                redirect_uri="http://localhost:6767",
+                                discovery=StaticDiscovery(
+                                    base_url="http://localhost:8000/f/"
+                                ),
+                            ),
+                        ]
+                    ),
                 ),
                 assert_groups={"mikro", "rekuest"},
             ),

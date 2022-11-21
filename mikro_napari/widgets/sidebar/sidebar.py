@@ -1,10 +1,4 @@
 import napari
-from arkitekt.apps.rekuest import ArkitektRekuest
-from rekuest.structures.registry import StructureRegistry
-from rekuest.widgets import SearchWidget
-from fakts.fakts import Fakts
-from fakts.grants.meta.failsafe import FailsafeGrant
-from fakts.grants.remote.public_redirect_grant import PublicRedirectGrant
 from koil.qt import QtRunner
 from mikro.api.schema import (
     ROIFragment,
@@ -19,8 +13,6 @@ import mikro
 from qtpy import QtWidgets
 from qtpy import QtCore
 from arkitekt.apps.connected import ConnectedApp
-from koil.composition.qt import QtPedanticKoil
-from herre.fakts import FaktsHerre
 from arkitekt.qt.magic_bar import AppState, MagicBar
 from rekuest.qt.builders import (
     QtInLoopActorBuilder,

@@ -5,45 +5,61 @@ from fakts.discovery.qt.selectable_beacon import (
     QtSelectableDiscovery,
     SelectBeaconWidget,
 )
-from fakts.fakts import Fakts
 from fakts.grants.meta.failsafe import FailsafeGrant
-from fakts.grants.remote.public_redirect_grant import PublicRedirectGrant
-from fakts.grants.remote.claim import ClaimGrant
-from herre.fakts.herre import FaktsHerre
-from koil.composition.qt import QtPedanticKoil
 from mikro_napari.widgets.main_widget import MikroNapariWidget
-from fakts.discovery.static import StaticDiscovery
+from fakts.grants.remote.retrieve import RetrieveGrant
+from fakts.grants import CacheGrant
 import napari
 import argparse
 from skimage.data import astronaut
 
 from mikro_napari.widgets.sidebar.sidebar import SidebarWidget
 import os
+from fakts.discovery.static import StaticDiscovery
+from herre import Herre
+from herre.grants import CacheGrant as HerreCacheGrant
+from herre.grants.oauth2.refresh import RefreshGrant
+from herre.grants.fakts import FaktsGrant
 
 
 def main(**kwargs):
 
     os.environ["NAPARI_ASYNC"] = "1"
 
+    identifier = "github.io.jhnnsrs.mikro_napari"
+    version = "v0.0.1"
+
     viewer = napari.Viewer()
+
+    x = SelectBeaconWidget()
 
     app = ConnectedApp(
         rekuest=ArkitektRekuest(),
         fakts=ArkitektFakts(
-            subapp="napari",
-            grant=FailsafeGrant(
-                grants=[
-                    ClaimGrant(
-                        identifier="github.io.jhnnsrs.napari",
-                        version="v0.0.1",
-                        client_secret="oO4eJgvv41Nkr9EaNAmZ5YI4WGgfJznUMW5ReGIcI6NsSXZiud3w3y2yGxdMf2WhEMdUKD6MMalLv1rlM8d6h5Q6vJR9vLbaKSHj2V5RpDrNVUWnJ1s2OmxiPSR6qoNH",
-                        discovery=StaticDiscovery(base_url="http://localhost:8000/f/"),
-                    ),
-                ]
+            grant=CacheGrant(
+                cache_file=f"{identifier}-{version}_fakts_cache.json",
+                grant=FailsafeGrant(
+                    grants=[
+                        RetrieveGrant(
+                            identifier=identifier,
+                            version=version,
+                            redirect_uri="http://localhost:6767",
+                            discovery=StaticDiscovery(
+                                base_url="http://localhost:8000/f/"
+                            ),
+                        ),
+                    ]
+                ),
             ),
             assert_groups={"mikro", "rekuest"},
         ),
-        herre=FaktsHerre(),
+        herre=Herre(
+            grant=HerreCacheGrant(
+                cache_file=f"{identifier}-{version}_herre_cache.json",
+                hash=f"{identifier}-{version}",
+                grant=RefreshGrant(grant=FaktsGrant()),
+            ),
+        ),
     )
 
     widget = MikroNapariWidget(viewer, app, **kwargs)
