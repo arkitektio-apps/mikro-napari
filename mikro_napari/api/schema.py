@@ -1,10 +1,10 @@
-from typing import Literal, List, Optional, Dict, Iterator, AsyncIterator
+from mikro.traits import ROI, Representation, Vectorizable
+from mikro.funcs import aexecute, subscribe, execute, asubscribe
+from pydantic import Field, BaseModel
+from typing import Optional, Dict, AsyncIterator, Literal, List, Iterator
+from mikro.rath import MikroRath
 from mikro.scalars import Store, FeatureValue
 from rath.scalars import ID
-from mikro.rath import MikroRath
-from mikro.funcs import execute, asubscribe, aexecute, subscribe
-from pydantic import BaseModel, Field
-from mikro.traits import Vectorizable, Representation, ROI
 from datetime import datetime
 from enum import Enum
 
@@ -87,8 +87,8 @@ class ROIType(str, Enum):
     "Point"
 
 
-class RepresentationVariety(str, Enum):
-    """An enumeration."""
+class RepresentationVarietyInput(str, Enum):
+    """Variety expresses the Type of Representation we are dealing with"""
 
     MASK = "MASK"
     "Mask (Value represent Labels)"
@@ -100,8 +100,19 @@ class RepresentationVariety(str, Enum):
     "Unknown"
 
 
-class RepresentationVarietyInput(str, Enum):
-    """Variety expresses the Type of Representation we are dealing with"""
+class PandasDType(str, Enum):
+    OBJECT = "OBJECT"
+    INT64 = "INT64"
+    FLOAT64 = "FLOAT64"
+    BOOL = "BOOL"
+    CATEGORY = "CATEGORY"
+    DATETIME65 = "DATETIME65"
+    TIMEDELTA = "TIMEDELTA"
+    UNICODE = "UNICODE"
+
+
+class RepresentationVariety(str, Enum):
+    """An enumeration."""
 
     MASK = "MASK"
     "Mask (Value represent Labels)"
@@ -146,17 +157,6 @@ class RoiTypeInput(str, Enum):
     "Slice"
     POINT = "POINT"
     "Point"
-
-
-class PandasDType(str, Enum):
-    OBJECT = "OBJECT"
-    INT64 = "INT64"
-    FLOAT64 = "FLOAT64"
-    BOOL = "BOOL"
-    CATEGORY = "CATEGORY"
-    DATETIME65 = "DATETIME65"
-    TIMEDELTA = "TIMEDELTA"
-    UNICODE = "UNICODE"
 
 
 class DescendendInput(BaseModel):
@@ -315,7 +315,7 @@ class ImagingEnvironmentInput(BaseModel):
     "A map of the imaging environment. Key value based"
 
 
-class InputVector(BaseModel, Vectorizable):
+class InputVector(Vectorizable, BaseModel):
     x: Optional[float]
     "X-coordinate"
     y: Optional[float]
@@ -811,7 +811,7 @@ class Get_roiQuery(BaseModel):
         document = "fragment ROI on ROI {\n  id\n  vectors {\n    x\n    y\n    z\n    t\n    c\n  }\n  type\n  representation {\n    id\n  }\n  creator {\n    id\n    color\n  }\n}\n\nquery get_roi($id: ID!) {\n  roi(id: $id) {\n    ...ROI\n  }\n}"
 
 
-class Search_roisQueryRois(ROI, BaseModel):
+class Search_roisQueryOptions(ROI, BaseModel):
     """A ROI is a region of interest in a representation.
 
     This region is to be regarded as a view on the representation. Depending
@@ -830,14 +830,14 @@ class Search_roisQueryRois(ROI, BaseModel):
 
 
 class Search_roisQuery(BaseModel):
-    rois: Optional[List[Optional[Search_roisQueryRois]]]
+    options: Optional[List[Optional[Search_roisQueryOptions]]]
     "All Rois\n    \n    This query returns all Rois that are stored on the platform\n    depending on the user's permissions. Generally, this query will return\n    all Rois that the user has access to. If the user is an amdin\n    or superuser, all Rois will be returned."
 
     class Arguments(BaseModel):
         search: str
 
     class Meta:
-        document = "query search_rois($search: String!) {\n  rois(repname: $search) {\n    label: id\n    value: id\n  }\n}"
+        document = "query search_rois($search: String!) {\n  options: rois(repname: $search) {\n    label: id\n    value: id\n  }\n}"
 
 
 class Get_multiscale_repQuery(BaseModel):
@@ -1268,11 +1268,11 @@ def get_roi(id: ID, rath: MikroRath = None) -> Optional[ROIFragment]:
 
 async def asearch_rois(
     search: str, rath: MikroRath = None
-) -> Optional[List[Optional[Search_roisQueryRois]]]:
+) -> Optional[List[Optional[Search_roisQueryOptions]]]:
     """search_rois
 
 
-     rois: A ROI is a region of interest in a representation.
+     options: A ROI is a region of interest in a representation.
 
         This region is to be regarded as a view on the representation. Depending
         on the implementatoin (type) of the ROI, the view can be constructed
@@ -1296,11 +1296,11 @@ async def asearch_rois(
 
 def search_rois(
     search: str, rath: MikroRath = None
-) -> Optional[List[Optional[Search_roisQueryRois]]]:
+) -> Optional[List[Optional[Search_roisQueryOptions]]]:
     """search_rois
 
 
-     rois: A ROI is a region of interest in a representation.
+     options: A ROI is a region of interest in a representation.
 
         This region is to be regarded as a view on the representation. Depending
         on the implementatoin (type) of the ROI, the view can be constructed

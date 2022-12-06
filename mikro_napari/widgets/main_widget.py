@@ -14,17 +14,11 @@ from qtpy import QtWidgets
 from qtpy import QtCore
 from arkitekt.apps.connected import ConnectedApp
 from arkitekt.qt.magic_bar import AppState, MagicBar
-from rekuest.qt.builders import (
-    QtInLoopActorBuilder,
-    QtInLoopBuilder,
-    QtPassFutureActorBuilder,
-    QtPassFutureBuilder,
-)
 from mikro_napari.models.representation import RepresentationQtModel
 from mikro_napari.widgets.dialogs.open_image import OpenImageDialog
 from fakts.grants.remote.base import StaticDiscovery
 import xarray as xr
-
+from rekuest.qt.builders import qtinloopactifier
 
 SMLM_REPRESENTATIONS = SearchWidget(
     query="""
@@ -99,25 +93,48 @@ class MikroNapariWidget(QtWidgets.QWidget):
 
         self.viewer.layers.selection.events.active.connect(self.on_selection_changed)
 
-        self.app.rekuest.register(builder=QtInLoopActorBuilder(), interfaces=["show"])(
-            self.representation_controller.on_image_loaded
+        self.app.rekuest.definition_registry.register(
+            self.representation_controller.on_image_loaded,
+            self.app.rekuest.structure_registry,
+            actifier=qtinloopactifier,
+            parent=self,
         )
-        self.app.rekuest.register(builder=QtInLoopActorBuilder(), interfaces=["show"])(
-            self.representation_controller.open_feature
+        self.app.rekuest.definition_registry.register(
+            self.representation_controller.open_feature,
+            self.app.rekuest.structure_registry,
+            actifier=qtinloopactifier,
+            parent=self,
         )
-        self.app.rekuest.register(builder=QtInLoopActorBuilder(), interfaces=["show"])(
-            self.representation_controller.open_metric
+        self.app.rekuest.definition_registry.register(
+            self.representation_controller.open_metric,
+            self.app.rekuest.structure_registry,
+            actifier=qtinloopactifier,
+            parent=self,
         )
-        self.app.rekuest.register(builder=QtInLoopActorBuilder(), interfaces=["show"])(
-            self.representation_controller.open_label
+        self.app.rekuest.definition_registry.register(
+            self.representation_controller.open_label,
+            self.app.rekuest.structure_registry,
+            actifier=qtinloopactifier,
+            parent=self,
         )
 
-        self.app.rekuest.register(builder=QtInLoopActorBuilder(), interfaces=["show"])(
-            self.representation_controller.tile_images
+        self.app.rekuest.definition_registry.register(
+            self.representation_controller.tile_images,
+            self.app.rekuest.structure_registry,
+            actifier=qtinloopactifier,
+            parent=self,
         )
-        self.app.rekuest.register(interfaces=["producer"])(self.upload_layer)
-        self.app.rekuest.register(interfaces=["producer"])(
-            self.representation_controller.stream_rois
+        self.app.rekuest.definition_registry.register(
+            self.upload_layer,
+            self.app.rekuest.structure_registry,
+            actifier=qtinloopactifier,
+            parent=self,
+        )
+        self.app.rekuest.definition_registry.register(
+            self.representation_controller.stream_rois,
+            self.app.rekuest.structure_registry,
+            actifier=qtinloopactifier,
+            parent=self,
         )
 
     def on_app_up(self):

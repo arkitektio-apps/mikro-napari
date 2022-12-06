@@ -13,16 +13,6 @@ import mikro
 from qtpy import QtWidgets
 from qtpy import QtCore
 from arkitekt.apps.connected import ConnectedApp
-from arkitekt.qt.magic_bar import AppState, MagicBar
-from rekuest.qt.builders import (
-    QtInLoopActorBuilder,
-    QtInLoopBuilder,
-    QtPassFutureActorBuilder,
-    QtPassFutureBuilder,
-)
-from mikro_napari.models.representation import RepresentationQtModel
-from mikro_napari.widgets.dialogs.open_image import OpenImageDialog
-from fakts.grants.remote.base import StaticDiscovery
 import xarray as xr
 from mikro_napari.utils import NapariROI
 
