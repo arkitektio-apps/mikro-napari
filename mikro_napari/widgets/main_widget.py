@@ -125,6 +125,18 @@ class MikroNapariWidget(QtWidgets.QWidget):
             parent=self,
         )
         self.app.rekuest.definition_registry.register(
+            self.representation_controller.open_position,
+            self.app.rekuest.structure_registry,
+            actifier=qtinloopactifier,
+            parent=self,
+        )
+        self.app.rekuest.definition_registry.register(
+            self.representation_controller.open_stage,
+            self.app.rekuest.structure_registry,
+            actifier=qtinloopactifier,
+            parent=self,
+        )
+        self.app.rekuest.definition_registry.register(
             self.upload_layer,
             self.app.rekuest.structure_registry,
             actifier=qtinloopactifier,

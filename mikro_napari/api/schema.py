@@ -1,24 +1,27 @@
-from mikro.traits import ROI, Representation, Vectorizable
-from mikro.funcs import aexecute, subscribe, execute, asubscribe
-from pydantic import Field, BaseModel
-from typing import Optional, Dict, AsyncIterator, Literal, List, Iterator
 from mikro.rath import MikroRath
-from mikro.scalars import Store, FeatureValue
+from pydantic import BaseModel, Field
+from enum import Enum
+from typing import Dict, AsyncIterator, List, Optional, Iterator, Literal
+from mikro.scalars import FeatureValue, Store
+from mikro.traits import Representation, ROI, Vectorizable
+from mikro.funcs import asubscribe, execute, aexecute, subscribe
 from rath.scalars import ID
 from datetime import datetime
-from enum import Enum
 
 
 class CommentableModels(str, Enum):
     GRUNNLAG_USERMETA = "GRUNNLAG_USERMETA"
     GRUNNLAG_ANTIBODY = "GRUNNLAG_ANTIBODY"
+    GRUNNLAG_OBJECTIVE = "GRUNNLAG_OBJECTIVE"
+    GRUNNLAG_INSTRUMENT = "GRUNNLAG_INSTRUMENT"
     GRUNNLAG_EXPERIMENT = "GRUNNLAG_EXPERIMENT"
     GRUNNLAG_EXPERIMENTALGROUP = "GRUNNLAG_EXPERIMENTALGROUP"
     GRUNNLAG_ANIMAL = "GRUNNLAG_ANIMAL"
     GRUNNLAG_OMEROFILE = "GRUNNLAG_OMEROFILE"
     GRUNNLAG_SAMPLE = "GRUNNLAG_SAMPLE"
+    GRUNNLAG_STAGE = "GRUNNLAG_STAGE"
+    GRUNNLAG_POSITION = "GRUNNLAG_POSITION"
     GRUNNLAG_REPRESENTATION = "GRUNNLAG_REPRESENTATION"
-    GRUNNLAG_INSTRUMENT = "GRUNNLAG_INSTRUMENT"
     GRUNNLAG_OMERO = "GRUNNLAG_OMERO"
     GRUNNLAG_METRIC = "GRUNNLAG_METRIC"
     GRUNNLAG_THUMBNAIL = "GRUNNLAG_THUMBNAIL"
@@ -33,13 +36,16 @@ class SharableModels(str, Enum):
 
     GRUNNLAG_USERMETA = "GRUNNLAG_USERMETA"
     GRUNNLAG_ANTIBODY = "GRUNNLAG_ANTIBODY"
+    GRUNNLAG_OBJECTIVE = "GRUNNLAG_OBJECTIVE"
+    GRUNNLAG_INSTRUMENT = "GRUNNLAG_INSTRUMENT"
     GRUNNLAG_EXPERIMENT = "GRUNNLAG_EXPERIMENT"
     GRUNNLAG_EXPERIMENTALGROUP = "GRUNNLAG_EXPERIMENTALGROUP"
     GRUNNLAG_ANIMAL = "GRUNNLAG_ANIMAL"
     GRUNNLAG_OMEROFILE = "GRUNNLAG_OMEROFILE"
     GRUNNLAG_SAMPLE = "GRUNNLAG_SAMPLE"
+    GRUNNLAG_STAGE = "GRUNNLAG_STAGE"
+    GRUNNLAG_POSITION = "GRUNNLAG_POSITION"
     GRUNNLAG_REPRESENTATION = "GRUNNLAG_REPRESENTATION"
-    GRUNNLAG_INSTRUMENT = "GRUNNLAG_INSTRUMENT"
     GRUNNLAG_OMERO = "GRUNNLAG_OMERO"
     GRUNNLAG_METRIC = "GRUNNLAG_METRIC"
     GRUNNLAG_THUMBNAIL = "GRUNNLAG_THUMBNAIL"
@@ -47,6 +53,29 @@ class SharableModels(str, Enum):
     GRUNNLAG_LABEL = "GRUNNLAG_LABEL"
     GRUNNLAG_FEATURE = "GRUNNLAG_FEATURE"
     BORD_TABLE = "BORD_TABLE"
+
+
+class LokClientGrantType(str, Enum):
+    """An enumeration."""
+
+    CLIENT_CREDENTIALS = "CLIENT_CREDENTIALS"
+    "Backend (Client Credentials)"
+    IMPLICIT = "IMPLICIT"
+    "Implicit Grant"
+    AUTHORIZATION_CODE = "AUTHORIZATION_CODE"
+    "Authorization Code"
+    PASSWORD = "PASSWORD"
+    "Password"
+    SESSION = "SESSION"
+    "Django Session"
+
+
+class AcquisitionKind(str, Enum):
+    """What do the multiple positions in this acquistion represent?"""
+
+    POSTION_IS_SAMPLE = "POSTION_IS_SAMPLE"
+    POSITION_IS_ROI = "POSITION_IS_ROI"
+    UNKNOWN = "UNKNOWN"
 
 
 class OmeroFileType(str, Enum):
@@ -124,18 +153,6 @@ class RepresentationVariety(str, Enum):
     "Unknown"
 
 
-class Medium(str, Enum):
-    """The medium of the imaging environment
-
-    Important for the objective settings"""
-
-    AIR = "AIR"
-    GLYCEROL = "GLYCEROL"
-    OIL = "OIL"
-    OTHER = "OTHER"
-    WATER = "WATER"
-
-
 class RoiTypeInput(str, Enum):
     """An enumeration."""
 
@@ -157,6 +174,18 @@ class RoiTypeInput(str, Enum):
     "Slice"
     POINT = "POINT"
     "Point"
+
+
+class Medium(str, Enum):
+    """The medium of the imaging environment
+
+    Important for the objective settings"""
+
+    AIR = "AIR"
+    GLYCEROL = "GLYCEROL"
+    OIL = "OIL"
+    OTHER = "OTHER"
+    WATER = "WATER"
 
 
 class DescendendInput(BaseModel):
@@ -198,6 +227,7 @@ class OmeroRepresentationInput(BaseModel):
     channels: Optional[List[Optional["ChannelInput"]]]
     physical_size: Optional["PhysicalSizeInput"] = Field(alias="physicalSize")
     scale: Optional[List[Optional[float]]]
+    position: Optional[ID]
     acquisition_date: Optional[datetime] = Field(alias="acquisitionDate")
     objective_settings: Optional["ObjectiveSettingsInput"] = Field(
         alias="objectiveSettings"
@@ -206,6 +236,7 @@ class OmeroRepresentationInput(BaseModel):
         alias="imagingEnvironment"
     )
     instrument: Optional[ID]
+    objective: Optional[ID]
 
 
 class PlaneInput(BaseModel):
@@ -592,12 +623,10 @@ class RepresentationFragmentSample(BaseModel):
 
 
 class RepresentationFragmentOmero(BaseModel):
-    """Omero is a model that stores the omero meta data
+    """Omero is a through model that stores the real world context of an image
 
-    This model is used to store the omero meta data. It is used to store the meta data of the omero file.
-    Its implementation is based on the omero meta data model. Refer to the omero documentation for more information.
-
-
+    This means that it stores the position (corresponding to the relative displacement to
+    a stage (Both are models)), objective and other meta data of the image.
 
     """
 
@@ -670,12 +699,10 @@ class RepresentationAndMaskFragmentDerived(Representation, BaseModel):
 
 
 class RepresentationAndMaskFragmentOmero(BaseModel):
-    """Omero is a model that stores the omero meta data
+    """Omero is a through model that stores the real world context of an image
 
-    This model is used to store the omero meta data. It is used to store the meta data of the omero file.
-    Its implementation is based on the omero meta data model. Refer to the omero documentation for more information.
-
-
+    This means that it stores the position (corresponding to the relative displacement to
+    a stage (Both are models)), objective and other meta data of the image.
 
     """
 
@@ -882,6 +909,92 @@ class Get_some_representationsQuery(BaseModel):
 
     class Meta:
         document = 'fragment ListRepresentation on Representation {\n  id\n  name\n  sample {\n    id\n    name\n  }\n}\n\nquery get_some_representations {\n  representations(limit: 10, order: "-created_at") {\n    ...ListRepresentation\n  }\n}'
+
+
+class Get_image_stageQueryStagePositionsOmerosRepresentation(Representation, BaseModel):
+    """A Representation is 5-dimensional representation of an image
+
+    Mikro stores each image as a 5-dimensional representation. The dimensions are:
+    - t: time
+    - c: channel
+    - z: z-stack
+    - x: x-dimension
+    - y: y-dimension
+
+    This ensures a unified api for all images, regardless of their original dimensions. Another main
+    determining factor for a representation is its variety:
+    A representation can be a raw image representating voxels (VOXEL)
+    or a segmentation mask representing instances of a class. (MASK)
+    It can also representate a human perception of the image (RGB) or a human perception of the mask (RGBMASK)
+
+    # Meta
+
+    Meta information is stored in the omero field which gives access to the omero-meta data. Refer to the omero documentation for more information.
+
+
+    #Origins and Derivations
+
+    Images can be filtered, which means that a new representation is created from the other (original) representations. This new representation is then linked to the original representations. This way, we can always trace back to the original representation.
+    Both are encapsulaed in the origins and derived fields.
+
+    Representations belong to *one* sample. Every transaction to our image data is still part of the original acuqistion, so also filtered images are refering back to the sample
+    Each iamge has also a name, which is used to identify the image. The name is unique within a sample.
+    File and Rois that are used to create images are saved in the file origins and roi origins repectively.
+
+
+    """
+
+    typename: Optional[Literal["Representation"]] = Field(alias="__typename")
+    id: ID
+    shape: Optional[List[int]]
+    "The arrays shape"
+
+
+class Get_image_stageQueryStagePositionsOmeros(BaseModel):
+    """Omero is a through model that stores the real world context of an image
+
+    This means that it stores the position (corresponding to the relative displacement to
+    a stage (Both are models)), objective and other meta data of the image.
+
+    """
+
+    typename: Optional[Literal["Omero"]] = Field(alias="__typename")
+    acquisition_date: Optional[datetime] = Field(alias="acquisitionDate")
+    representation: Get_image_stageQueryStagePositionsOmerosRepresentation
+
+
+class Get_image_stageQueryStagePositions(BaseModel):
+    """The relative position of a sample on a microscope stage"""
+
+    typename: Optional[Literal["Position"]] = Field(alias="__typename")
+    x: Optional[float]
+    y: Optional[float]
+    z: Optional[float]
+    omeros: Optional[List[Optional[Get_image_stageQueryStagePositionsOmeros]]]
+    "Associated images through Omero"
+
+
+class Get_image_stageQueryStage(BaseModel):
+    """An Stage is a set of positions that share a common space on a microscope and can
+    be use to translate.
+
+
+    """
+
+    typename: Optional[Literal["Stage"]] = Field(alias="__typename")
+    positions: List[Get_image_stageQueryStagePositions]
+
+
+class Get_image_stageQuery(BaseModel):
+    stage: Optional[Get_image_stageQueryStage]
+    'Get a single experiment by ID"\n    \n    Returns a single experiment by ID. If the user does not have access\n    to the experiment, an error will be raised.\n    \n    '
+
+    class Arguments(BaseModel):
+        id: ID
+        limit: Optional[int] = None
+
+    class Meta:
+        document = 'query get_image_stage($id: ID!, $limit: Int) {\n  stage(id: $id) {\n    positions {\n      x\n      y\n      z\n      omeros(order: "-acquired", limit: $limit) {\n        acquisitionDate\n        representation {\n          id\n          shape\n        }\n      }\n    }\n  }\n}'
 
 
 async def awatch_rois(
@@ -1712,6 +1825,54 @@ def get_some_representations(
     Returns:
         Optional[List[Optional[ListRepresentationFragment]]]"""
     return execute(Get_some_representationsQuery, {}, rath=rath).representations
+
+
+async def aget_image_stage(
+    id: ID, limit: Optional[int] = None, rath: MikroRath = None
+) -> Optional[Get_image_stageQueryStage]:
+    """get_image_stage
+
+
+     stage: An Stage is a set of positions that share a common space on a microscope and can
+        be use to translate.
+
+
+
+
+
+    Arguments:
+        id (ID): id
+        limit (Optional[int], optional): limit.
+        rath (mikro.rath.MikroRath, optional): The mikro rath client
+
+    Returns:
+        Optional[Get_image_stageQueryStage]"""
+    return (
+        await aexecute(Get_image_stageQuery, {"id": id, "limit": limit}, rath=rath)
+    ).stage
+
+
+def get_image_stage(
+    id: ID, limit: Optional[int] = None, rath: MikroRath = None
+) -> Optional[Get_image_stageQueryStage]:
+    """get_image_stage
+
+
+     stage: An Stage is a set of positions that share a common space on a microscope and can
+        be use to translate.
+
+
+
+
+
+    Arguments:
+        id (ID): id
+        limit (Optional[int], optional): limit.
+        rath (mikro.rath.MikroRath, optional): The mikro rath client
+
+    Returns:
+        Optional[Get_image_stageQueryStage]"""
+    return execute(Get_image_stageQuery, {"id": id, "limit": limit}, rath=rath).stage
 
 
 DescendendInput.update_forward_refs()

@@ -11,18 +11,21 @@ from mikro.api.schema import (
     ListROIFragment,
     RepresentationFragment,
     RepresentationVariety,
+    StageFragment,
     RoiTypeInput,
     Watch_roisSubscriptionRois,
     acreate_roi,
     get_representation,
     aget_rois,
     awatch_rois,
+    PositionFragment,
     create_roi,
 )
 from mikro_napari.api.schema import (
     DetailLabelFragment,
     aget_label_for,
     delete_roi,
+    get_image_stage,
 )
 import pandas as pd
 
@@ -219,6 +222,50 @@ class RepresentationQtModel(QtCore.QObject):
             rep (RepresentationFragment): The Image
         """
         self.active_representation = get_representation(rep.label.representation.id)
+
+    def open_position(self, pos: PositionFragment):
+        """Open Position
+
+        Loads the position into the viewer as a time series
+
+        Args:
+            rep (RepresentationFragment): The Image
+
+        """
+
+        reps = [omero.representation.data for omero in pos.omeros]
+
+        image = da.stack([rep.data for rep in reps], axis=1)
+
+        self.viewer.add_image(
+            image,
+            name="Position {pos.x}, {pos.y}, {pos.z}",
+            metadata={"mikro": True, "type": "POSITION"},
+        )
+
+    def open_stage(self, acq: StageFragment, limit_t: int = 2):
+        """Open Stage
+
+        Loads the stage into the viewer
+
+
+        Args:
+            rep (RepresentationFragment): The Image
+
+        """
+
+        rep = get_image_stage(acq.id, limit=limit_t)
+
+        xmax = np.max([p.x for p in rep.positions]) or 1
+        ymax = np.max([p.y for p in rep.positions]) or 1
+        zmax = np.max([p.z for p in rep.positions]) or 1
+
+        image = da.zeros((1, 1, zmax, xmax, ymax))
+        self.viewer.add_image(
+            image,
+            name="Position {pos.x}, {pos.y}, {pos.z}",
+            metadata={"mikro": True, "type": "POSITION"},
+        )
 
     def tile_images(self, reps: List[RepresentationFragment]):
         """Tile Images on Napari
