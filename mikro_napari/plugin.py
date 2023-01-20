@@ -27,6 +27,7 @@ class ArkitektPluginWidget(MikroNapariWidget):
             rekuest=ArkitektRekuest(),
             fakts=ArkitektFakts(
                 grant=CacheGrant(
+                    skip_cache=True,
                     cache_file="mikro_napari_cache.json",
                     grant=FailsafeGrant(
                         grants=[
@@ -34,8 +35,8 @@ class ArkitektPluginWidget(MikroNapariWidget):
                                 identifier="jhnnsrs.github.io/mikro_napari",
                                 version="v0.0.1",
                                 redirect_uri="http://localhost:6767",
-                                discovery=StaticDiscovery(
-                                    base_url="http://localhost:8000/f/"
+                                discovery=QtSelectableDiscovery(
+                                    widget=SelectBeaconWidget(),
                                 ),
                             ),
                         ]

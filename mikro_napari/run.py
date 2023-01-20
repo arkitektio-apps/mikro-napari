@@ -20,7 +20,8 @@ from herre import Herre
 from herre.grants import CacheGrant as HerreCacheGrant
 from herre.grants.oauth2.refresh import RefreshGrant
 from herre.grants.fakts import FaktsGrant
-
+from herre.grants.fakts.fakts_login_screen import FaktsQtLoginScreen, LoginWidget
+from arkitekt.builders import publicqt
 
 def main(**kwargs):
 
@@ -31,36 +32,8 @@ def main(**kwargs):
 
     viewer = napari.Viewer()
 
-    x = SelectBeaconWidget()
 
-    app = ConnectedApp(
-        rekuest=ArkitektRekuest(),
-        fakts=ArkitektFakts(
-            grant=CacheGrant(
-                cache_file=f"{identifier}-{version}_fakts_cache.json",
-                grant=FailsafeGrant(
-                    grants=[
-                        RetrieveGrant(
-                            identifier=identifier,
-                            version=version,
-                            redirect_uri="http://localhost:6767",
-                            discovery=StaticDiscovery(
-                                base_url="http://localhost:8000/f/"
-                            ),
-                        ),
-                    ]
-                ),
-            ),
-            assert_groups={"mikro", "rekuest"},
-        ),
-        herre=Herre(
-            grant=HerreCacheGrant(
-                cache_file=f"{identifier}-{version}_herre_cache.json",
-                hash=f"{identifier}-{version}",
-                grant=RefreshGrant(grant=FaktsGrant()),
-            ),
-        ),
-    )
+    app = publicqt(identifier, version, parent=viewer.window.qt_viewer)
 
     widget = MikroNapariWidget(viewer, app, **kwargs)
     sidebar = SidebarWidget(viewer, app, **kwargs)

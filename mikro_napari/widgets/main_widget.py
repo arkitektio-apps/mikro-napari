@@ -145,8 +145,6 @@ class MikroNapariWidget(QtWidgets.QWidget):
         self.app.rekuest.definition_registry.register(
             self.representation_controller.stream_rois,
             self.app.rekuest.structure_registry,
-            actifier=qtinloopactifier,
-            parent=self,
         )
 
     def on_app_up(self):

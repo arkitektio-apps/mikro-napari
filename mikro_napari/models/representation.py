@@ -317,6 +317,7 @@ class RepresentationQtModel(QtCore.QObject):
         self.ask_roi_dialog.ask(self.stream_roi_generator)
 
         async for roi in self.stream_roi_generator:
+            print("Got ROI", roi)
             yield roi
 
         self.stream_roi_generator = None
