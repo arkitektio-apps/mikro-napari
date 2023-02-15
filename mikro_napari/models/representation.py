@@ -150,29 +150,16 @@ class RepresentationQtModel(QtCore.QObject):
 
         print(value.omero)
 
-        if value.omero:
-            if value.omero.scale:
-                scale = value.omero.scale
-            else:
-                phys = value.omero.physical_size
-                if phys:
-                    scale = [
-                        phys.c or 1,
-                        phys.t or 1,
-                        phys.z or 1,
-                        phys.x or 1,
-                        phys.y or 1,
-                    ]
 
         if value.variety == RepresentationVariety.RGB:
             self._image_layer = self.viewer.add_image(
-                value.data.transpose(*list("tzxyc")),
+                value.data.transpose(*list("tzyxc")),
                 metadata={"mikro": True, "representation": value, "type": "IMAGE"},
                 scale=scale,
             )
         else:
             self._image_layer = self.viewer.add_image(
-                value.data.transpose(*list("ctzxy")),
+                value.data.transpose(*list("ctzyx")),
                 metadata={"mikro": True, "representation": value, "type": "IMAGE"},
                 scale=scale,
             )

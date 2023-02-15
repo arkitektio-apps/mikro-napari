@@ -1,12 +1,12 @@
-from mikro.traits import Representation, ROI, Vectorizable
-from mikro.funcs import aexecute, asubscribe, execute, subscribe
+from typing import Iterator, Optional, List, Dict, Literal, AsyncIterator
+from mikro.funcs import subscribe, execute, asubscribe, aexecute
+from mikro.scalars import FeatureValue, AffineMatrix, Store
+from pydantic import Field, BaseModel
 from mikro.rath import MikroRath
 from enum import Enum
-from typing import Dict, Literal, Iterator, AsyncIterator, List, Optional
-from rath.scalars import ID
-from pydantic import Field, BaseModel
-from mikro.scalars import Store, FeatureValue
+from mikro.traits import Representation, Vectorizable, ROI
 from datetime import datetime
+from rath.scalars import ID
 
 
 class CommentableModels(str, Enum):
@@ -14,6 +14,7 @@ class CommentableModels(str, Enum):
     GRUNNLAG_ANTIBODY = "GRUNNLAG_ANTIBODY"
     GRUNNLAG_OBJECTIVE = "GRUNNLAG_OBJECTIVE"
     GRUNNLAG_INSTRUMENT = "GRUNNLAG_INSTRUMENT"
+    GRUNNLAG_DATASET = "GRUNNLAG_DATASET"
     GRUNNLAG_EXPERIMENT = "GRUNNLAG_EXPERIMENT"
     GRUNNLAG_CONTEXT = "GRUNNLAG_CONTEXT"
     GRUNNLAG_DATALINK = "GRUNNLAG_DATALINK"
@@ -41,6 +42,7 @@ class SharableModels(str, Enum):
     GRUNNLAG_ANTIBODY = "GRUNNLAG_ANTIBODY"
     GRUNNLAG_OBJECTIVE = "GRUNNLAG_OBJECTIVE"
     GRUNNLAG_INSTRUMENT = "GRUNNLAG_INSTRUMENT"
+    GRUNNLAG_DATASET = "GRUNNLAG_DATASET"
     GRUNNLAG_EXPERIMENT = "GRUNNLAG_EXPERIMENT"
     GRUNNLAG_CONTEXT = "GRUNNLAG_CONTEXT"
     GRUNNLAG_DATALINK = "GRUNNLAG_DATALINK"
@@ -76,12 +78,47 @@ class LokClientGrantType(str, Enum):
     "Django Session"
 
 
-class AcquisitionKind(str, Enum):
-    """What do the multiple positions in this acquistion represent?"""
+class LinkableModels(str, Enum):
+    """LinkableModels Models are models that can be shared amongst users and groups. They representent the models of the DB"""
 
-    POSTION_IS_SAMPLE = "POSTION_IS_SAMPLE"
-    POSITION_IS_ROI = "POSITION_IS_ROI"
-    UNKNOWN = "UNKNOWN"
+    ADMIN_LOGENTRY = "ADMIN_LOGENTRY"
+    AUTH_PERMISSION = "AUTH_PERMISSION"
+    AUTH_GROUP = "AUTH_GROUP"
+    CONTENTTYPES_CONTENTTYPE = "CONTENTTYPES_CONTENTTYPE"
+    SESSIONS_SESSION = "SESSIONS_SESSION"
+    TAGGIT_TAG = "TAGGIT_TAG"
+    TAGGIT_TAGGEDITEM = "TAGGIT_TAGGEDITEM"
+    KOMMENT_COMMENT = "KOMMENT_COMMENT"
+    DB_TESTMODEL = "DB_TESTMODEL"
+    LOK_LOKUSER = "LOK_LOKUSER"
+    LOK_LOKAPP = "LOK_LOKAPP"
+    LOK_LOKCLIENT = "LOK_LOKCLIENT"
+    GUARDIAN_USEROBJECTPERMISSION = "GUARDIAN_USEROBJECTPERMISSION"
+    GUARDIAN_GROUPOBJECTPERMISSION = "GUARDIAN_GROUPOBJECTPERMISSION"
+    GRUNNLAG_USERMETA = "GRUNNLAG_USERMETA"
+    GRUNNLAG_ANTIBODY = "GRUNNLAG_ANTIBODY"
+    GRUNNLAG_OBJECTIVE = "GRUNNLAG_OBJECTIVE"
+    GRUNNLAG_INSTRUMENT = "GRUNNLAG_INSTRUMENT"
+    GRUNNLAG_DATASET = "GRUNNLAG_DATASET"
+    GRUNNLAG_EXPERIMENT = "GRUNNLAG_EXPERIMENT"
+    GRUNNLAG_CONTEXT = "GRUNNLAG_CONTEXT"
+    GRUNNLAG_DATALINK = "GRUNNLAG_DATALINK"
+    GRUNNLAG_EXPERIMENTALGROUP = "GRUNNLAG_EXPERIMENTALGROUP"
+    GRUNNLAG_ANIMAL = "GRUNNLAG_ANIMAL"
+    GRUNNLAG_OMEROFILE = "GRUNNLAG_OMEROFILE"
+    GRUNNLAG_MODEL = "GRUNNLAG_MODEL"
+    GRUNNLAG_SAMPLE = "GRUNNLAG_SAMPLE"
+    GRUNNLAG_STAGE = "GRUNNLAG_STAGE"
+    GRUNNLAG_POSITION = "GRUNNLAG_POSITION"
+    GRUNNLAG_REPRESENTATION = "GRUNNLAG_REPRESENTATION"
+    GRUNNLAG_OMERO = "GRUNNLAG_OMERO"
+    GRUNNLAG_METRIC = "GRUNNLAG_METRIC"
+    GRUNNLAG_THUMBNAIL = "GRUNNLAG_THUMBNAIL"
+    GRUNNLAG_ROI = "GRUNNLAG_ROI"
+    GRUNNLAG_LABEL = "GRUNNLAG_LABEL"
+    GRUNNLAG_FEATURE = "GRUNNLAG_FEATURE"
+    BORD_TABLE = "BORD_TABLE"
+    PLOTQL_PLOT = "PLOTQL_PLOT"
 
 
 class OmeroFileType(str, Enum):
@@ -159,6 +196,18 @@ class RepresentationVariety(str, Enum):
     "Unknown"
 
 
+class Medium(str, Enum):
+    """The medium of the imaging environment
+
+    Important for the objective settings"""
+
+    AIR = "AIR"
+    GLYCEROL = "GLYCEROL"
+    OIL = "OIL"
+    OTHER = "OTHER"
+    WATER = "WATER"
+
+
 class RoiTypeInput(str, Enum):
     """An enumeration."""
 
@@ -182,66 +231,20 @@ class RoiTypeInput(str, Enum):
     "Point"
 
 
-class Medium(str, Enum):
-    """The medium of the imaging environment
-
-    Important for the objective settings"""
-
-    AIR = "AIR"
-    GLYCEROL = "GLYCEROL"
-    OIL = "OIL"
-    OTHER = "OTHER"
-    WATER = "WATER"
-
-
-class LinkableModels(str, Enum):
-    """LinkableModels Models are models that can be shared amongst users and groups. They representent the models of the DB"""
-
-    ADMIN_LOGENTRY = "ADMIN_LOGENTRY"
-    AUTH_PERMISSION = "AUTH_PERMISSION"
-    AUTH_GROUP = "AUTH_GROUP"
-    CONTENTTYPES_CONTENTTYPE = "CONTENTTYPES_CONTENTTYPE"
-    SESSIONS_SESSION = "SESSIONS_SESSION"
-    TAGGIT_TAG = "TAGGIT_TAG"
-    TAGGIT_TAGGEDITEM = "TAGGIT_TAGGEDITEM"
-    KOMMENT_COMMENT = "KOMMENT_COMMENT"
-    DB_TESTMODEL = "DB_TESTMODEL"
-    LOK_LOKUSER = "LOK_LOKUSER"
-    LOK_LOKAPP = "LOK_LOKAPP"
-    LOK_LOKCLIENT = "LOK_LOKCLIENT"
-    GUARDIAN_USEROBJECTPERMISSION = "GUARDIAN_USEROBJECTPERMISSION"
-    GUARDIAN_GROUPOBJECTPERMISSION = "GUARDIAN_GROUPOBJECTPERMISSION"
-    GRUNNLAG_USERMETA = "GRUNNLAG_USERMETA"
-    GRUNNLAG_ANTIBODY = "GRUNNLAG_ANTIBODY"
-    GRUNNLAG_OBJECTIVE = "GRUNNLAG_OBJECTIVE"
-    GRUNNLAG_INSTRUMENT = "GRUNNLAG_INSTRUMENT"
-    GRUNNLAG_EXPERIMENT = "GRUNNLAG_EXPERIMENT"
-    GRUNNLAG_CONTEXT = "GRUNNLAG_CONTEXT"
-    GRUNNLAG_DATALINK = "GRUNNLAG_DATALINK"
-    GRUNNLAG_EXPERIMENTALGROUP = "GRUNNLAG_EXPERIMENTALGROUP"
-    GRUNNLAG_ANIMAL = "GRUNNLAG_ANIMAL"
-    GRUNNLAG_OMEROFILE = "GRUNNLAG_OMEROFILE"
-    GRUNNLAG_MODEL = "GRUNNLAG_MODEL"
-    GRUNNLAG_SAMPLE = "GRUNNLAG_SAMPLE"
-    GRUNNLAG_STAGE = "GRUNNLAG_STAGE"
-    GRUNNLAG_POSITION = "GRUNNLAG_POSITION"
-    GRUNNLAG_REPRESENTATION = "GRUNNLAG_REPRESENTATION"
-    GRUNNLAG_OMERO = "GRUNNLAG_OMERO"
-    GRUNNLAG_METRIC = "GRUNNLAG_METRIC"
-    GRUNNLAG_THUMBNAIL = "GRUNNLAG_THUMBNAIL"
-    GRUNNLAG_ROI = "GRUNNLAG_ROI"
-    GRUNNLAG_LABEL = "GRUNNLAG_LABEL"
-    GRUNNLAG_FEATURE = "GRUNNLAG_FEATURE"
-    BORD_TABLE = "BORD_TABLE"
-    PLOTQL_PLOT = "PLOTQL_PLOT"
-
-
 class ModelKind(str, Enum):
     """What format is the model in?"""
 
     ONNX = "ONNX"
     TENSORFLOW = "TENSORFLOW"
     PYTORCH = "PYTORCH"
+    UNKNOWN = "UNKNOWN"
+
+
+class AcquisitionKind(str, Enum):
+    """What do the multiple positions in this acquistion represent?"""
+
+    POSTION_IS_SAMPLE = "POSTION_IS_SAMPLE"
+    POSITION_IS_ROI = "POSITION_IS_ROI"
     UNKNOWN = "UNKNOWN"
 
 
@@ -283,6 +286,7 @@ class OmeroRepresentationInput(BaseModel):
     planes: Optional[List[Optional["PlaneInput"]]]
     channels: Optional[List[Optional["ChannelInput"]]]
     physical_size: Optional["PhysicalSizeInput"] = Field(alias="physicalSize")
+    affine_transformation: Optional[AffineMatrix] = Field(alias="affineTransformation")
     scale: Optional[List[Optional[float]]]
     position: Optional[ID]
     acquisition_date: Optional[datetime] = Field(alias="acquisitionDate")
@@ -1004,7 +1008,7 @@ class Get_image_stageQueryStagePositionsOmerosRepresentation(Representation, Bas
     typename: Optional[Literal["Representation"]] = Field(alias="__typename")
     id: ID
     shape: Optional[List[int]]
-    "The arrays shape"
+    "The arrays shape format [c,t,z,y,x]"
 
 
 class Get_image_stageQueryStagePositionsOmeros(BaseModel):
@@ -1024,9 +1028,12 @@ class Get_image_stageQueryStagePositions(BaseModel):
     """The relative position of a sample on a microscope stage"""
 
     typename: Optional[Literal["Position"]] = Field(alias="__typename")
-    x: Optional[float]
-    y: Optional[float]
-    z: Optional[float]
+    x: float
+    "pixelSize for x in microns"
+    y: float
+    "pixelSize for y in microns"
+    z: float
+    "pixelSize for z in microns"
     omeros: Optional[List[Optional[Get_image_stageQueryStagePositionsOmeros]]]
     "Associated images through Omero"
 

@@ -2,7 +2,7 @@ name: mikro-napari
 contributions:
   commands:
     - id: mikro-napari.arkitekt_widget
-      title: Open my widget
+      title: Open Arkitekt
       python_name: mikro_napari.plugin:ArkitektPluginWidget
   widgets:
     - command: mikro-napari.arkitekt_widget
