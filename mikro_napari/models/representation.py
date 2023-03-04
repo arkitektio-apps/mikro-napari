@@ -1,7 +1,7 @@
 from typing import Dict, List, Optional
 from qtpy import QtCore, QtWidgets
 from arkitekt.apps.connected import ConnectedApp
-from koil.qt import QtFuture, QtGenerator, QtRunner, QtGeneratorRunner
+from koil.qt import QtGenerator, QtRunner, QtGeneratorRunner
 from mikro.api.schema import (
     InputVector,
     MetricFragment,
@@ -19,7 +19,6 @@ from mikro.api.schema import (
     aget_rois,
     awatch_rois,
     PositionFragment,
-    create_roi,
 )
 from mikro_napari.api.schema import (
     DetailLabelFragment,
@@ -27,10 +26,8 @@ from mikro_napari.api.schema import (
     delete_roi,
     get_image_stage,
 )
-import pandas as pd
 
 import dask.array as da
-import xarray as xr
 import napari
 from napari.layers.shapes._shapes_constants import Mode
 import numpy as np

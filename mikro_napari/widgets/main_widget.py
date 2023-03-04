@@ -3,27 +3,22 @@ from rekuest.widgets import SearchWidget
 from koil.qt import QtRunner
 from mikro.api.schema import (
     RepresentationVariety,
-    Search_representationQuery,
     afrom_xarray,
     RepresentationFragment,
-    aget_roi,
-    from_xarray,
 )
-import mikro
 from qtpy import QtWidgets
 from qtpy import QtCore
 from arkitekt.apps.connected import ConnectedApp
 from arkitekt.qt.magic_bar import AppState, MagicBar
 from mikro_napari.models.representation import RepresentationQtModel
 from mikro_napari.widgets.dialogs.open_image import OpenImageDialog
-from fakts.grants.remote.base import StaticDiscovery
 import xarray as xr
 from rekuest.qt.builders import qtinloopactifier
 
 SMLM_REPRESENTATIONS = SearchWidget(
     query="""
-    query Search($search: String){
-        options: representations(name: $search, tags: ["smlm"]){
+    query Search($search: String, $values: [ID]){
+        options: representations(name: $search, tags: ["smlm"], ids: $values){
             value: id
             label: name
         }
@@ -35,8 +30,8 @@ SMLM_REPRESENTATIONS = SearchWidget(
 
 MULTISCALE_REPRESENTATIONS = SearchWidget(
     query="""
-        query Search($search: String){
-            options: representations(name: $search, derivedTags: ["multiscale"]){
+        query Search($search: String, $values: [ID]){
+            options: representations(name: $search, derivedTags: ["multiscale"],  ids: $values){
                 value: id
                 label: name
             }
@@ -49,7 +44,7 @@ MULTISCALE_REPRESENTATIONS = SearchWidget(
 class MikroNapariWidget(QtWidgets.QWidget):
     emit_image: QtCore.Signal = QtCore.Signal(object)
 
-    def __init__(self, viewer: napari.Viewer, app: ConnectedApp, *args, **kwargs):
+    def __init__(self, viewer: napari.Viewer, app: ConnectedApp, *args, **kwargs) -> None:
         super(MikroNapariWidget, self).__init__(*args, **kwargs)
 
         self.viewer = viewer
@@ -167,10 +162,10 @@ class MikroNapariWidget(QtWidgets.QWidget):
         ]
 
         if self.active_non_mikro_layers and not self.active_mikro_layers:
-            self.upload_image_button.setText(f"Upload Layer")
+            self.upload_image_button.setText("Upload Layer")
             self.upload_image_button.setEnabled(self.magic_bar.state == AppState.UP)
         else:
-            self.upload_image_button.setText(f"Upload Layer")
+            self.upload_image_button.setText("Upload Layer")
             self.upload_image_button.setEnabled(False)
 
     async def upload_layer(self, name: str = "") -> RepresentationFragment:

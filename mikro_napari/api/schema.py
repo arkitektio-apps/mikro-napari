@@ -1,12 +1,12 @@
-from typing import Iterator, Optional, List, Dict, Literal, AsyncIterator
-from mikro.funcs import subscribe, execute, asubscribe, aexecute
-from mikro.scalars import FeatureValue, AffineMatrix, Store
-from pydantic import Field, BaseModel
+from typing import Optional, Iterator, AsyncIterator, Literal, List, Tuple, Dict
+from mikro.funcs import execute, asubscribe, aexecute, subscribe
 from mikro.rath import MikroRath
-from enum import Enum
-from mikro.traits import Representation, Vectorizable, ROI
-from datetime import datetime
+from mikro.traits import Vectorizable, ROI, Representation
+from mikro.scalars import AffineMatrix, FeatureValue, Store
+from pydantic import BaseModel, Field
 from rath.scalars import ID
+from datetime import datetime
+from enum import Enum
 
 
 class CommentableModels(str, Enum):
@@ -17,6 +17,7 @@ class CommentableModels(str, Enum):
     GRUNNLAG_DATASET = "GRUNNLAG_DATASET"
     GRUNNLAG_EXPERIMENT = "GRUNNLAG_EXPERIMENT"
     GRUNNLAG_CONTEXT = "GRUNNLAG_CONTEXT"
+    GRUNNLAG_RELATION = "GRUNNLAG_RELATION"
     GRUNNLAG_DATALINK = "GRUNNLAG_DATALINK"
     GRUNNLAG_EXPERIMENTALGROUP = "GRUNNLAG_EXPERIMENTALGROUP"
     GRUNNLAG_ANIMAL = "GRUNNLAG_ANIMAL"
@@ -45,6 +46,7 @@ class SharableModels(str, Enum):
     GRUNNLAG_DATASET = "GRUNNLAG_DATASET"
     GRUNNLAG_EXPERIMENT = "GRUNNLAG_EXPERIMENT"
     GRUNNLAG_CONTEXT = "GRUNNLAG_CONTEXT"
+    GRUNNLAG_RELATION = "GRUNNLAG_RELATION"
     GRUNNLAG_DATALINK = "GRUNNLAG_DATALINK"
     GRUNNLAG_EXPERIMENTALGROUP = "GRUNNLAG_EXPERIMENTALGROUP"
     GRUNNLAG_ANIMAL = "GRUNNLAG_ANIMAL"
@@ -102,6 +104,7 @@ class LinkableModels(str, Enum):
     GRUNNLAG_DATASET = "GRUNNLAG_DATASET"
     GRUNNLAG_EXPERIMENT = "GRUNNLAG_EXPERIMENT"
     GRUNNLAG_CONTEXT = "GRUNNLAG_CONTEXT"
+    GRUNNLAG_RELATION = "GRUNNLAG_RELATION"
     GRUNNLAG_DATALINK = "GRUNNLAG_DATALINK"
     GRUNNLAG_EXPERIMENTALGROUP = "GRUNNLAG_EXPERIMENTALGROUP"
     GRUNNLAG_ANIMAL = "GRUNNLAG_ANIMAL"
@@ -249,7 +252,7 @@ class AcquisitionKind(str, Enum):
 
 
 class DescendendInput(BaseModel):
-    children: Optional[List[Optional["DescendendInput"]]]
+    children: Optional[Tuple[Optional["DescendendInput"], ...]]
     typename: Optional[str]
     "The type of the descendent"
     user: Optional[str]
@@ -263,16 +266,31 @@ class DescendendInput(BaseModel):
     text: Optional[str]
     "The text of the leaf"
 
+    class Config:
+        frozen = True
+        extra = "forbid"
+        use_enum_values = True
+
 
 class GroupAssignmentInput(BaseModel):
-    permissions: List[Optional[str]]
+    permissions: Tuple[Optional[str], ...]
     group: ID
+
+    class Config:
+        frozen = True
+        extra = "forbid"
+        use_enum_values = True
 
 
 class UserAssignmentInput(BaseModel):
-    permissions: List[Optional[str]]
+    permissions: Tuple[Optional[str], ...]
     user: str
     "The user id"
+
+    class Config:
+        frozen = True
+        extra = "forbid"
+        use_enum_values = True
 
 
 class OmeroRepresentationInput(BaseModel):
@@ -283,11 +301,11 @@ class OmeroRepresentationInput(BaseModel):
     part of the mikro datamodel and are not accessed here.
     - Some parameters are ommited as they are not really used"""
 
-    planes: Optional[List[Optional["PlaneInput"]]]
-    channels: Optional[List[Optional["ChannelInput"]]]
+    planes: Optional[Tuple[Optional["PlaneInput"], ...]]
+    channels: Optional[Tuple[Optional["ChannelInput"], ...]]
     physical_size: Optional["PhysicalSizeInput"] = Field(alias="physicalSize")
     affine_transformation: Optional[AffineMatrix] = Field(alias="affineTransformation")
-    scale: Optional[List[Optional[float]]]
+    scale: Optional[Tuple[Optional[float], ...]]
     position: Optional[ID]
     acquisition_date: Optional[datetime] = Field(alias="acquisitionDate")
     objective_settings: Optional["ObjectiveSettingsInput"] = Field(
@@ -298,6 +316,11 @@ class OmeroRepresentationInput(BaseModel):
     )
     instrument: Optional[ID]
     objective: Optional[ID]
+
+    class Config:
+        frozen = True
+        extra = "forbid"
+        use_enum_values = True
 
 
 class PlaneInput(BaseModel):
@@ -331,6 +354,11 @@ class PlaneInput(BaseModel):
     delta_t: Optional[float] = Field(alias="deltaT")
     "The Delta T to the origin of the image acqusition"
 
+    class Config:
+        frozen = True
+        extra = "forbid"
+        use_enum_values = True
+
 
 class ChannelInput(BaseModel):
     """A channel in an image
@@ -348,6 +376,11 @@ class ChannelInput(BaseModel):
     "The acquisition mode of the channel"
     color: Optional[str]
     "The default color for the channel (might be ommited by the rendered)"
+
+    class Config:
+        frozen = True
+        extra = "forbid"
+        use_enum_values = True
 
 
 class PhysicalSizeInput(BaseModel):
@@ -374,6 +407,11 @@ class PhysicalSizeInput(BaseModel):
     c: Optional[float]
     "Physical size of *one* Pixel in the c dimension (in nm)"
 
+    class Config:
+        frozen = True
+        extra = "forbid"
+        use_enum_values = True
+
 
 class ObjectiveSettingsInput(BaseModel):
     """Settings of the objective used to acquire the image
@@ -388,6 +426,11 @@ class ObjectiveSettingsInput(BaseModel):
     "The numerical aperture of the objective"
     working_distance: Optional[float] = Field(alias="workingDistance")
     "The working distance of the objective"
+
+    class Config:
+        frozen = True
+        extra = "forbid"
+        use_enum_values = True
 
 
 class ImagingEnvironmentInput(BaseModel):
@@ -406,6 +449,11 @@ class ImagingEnvironmentInput(BaseModel):
     map: Optional[Dict]
     "A map of the imaging environment. Key value based"
 
+    class Config:
+        frozen = True
+        extra = "forbid"
+        use_enum_values = True
+
 
 class InputVector(Vectorizable, BaseModel):
     x: Optional[float]
@@ -418,6 +466,11 @@ class InputVector(Vectorizable, BaseModel):
     "C-coordinate"
     t: Optional[float]
     "T-coordinate"
+
+    class Config:
+        frozen = True
+        extra = "forbid"
+        use_enum_values = True
 
 
 class DetailLabelFragmentFeatures(BaseModel):
@@ -436,29 +489,35 @@ class DetailLabelFragmentFeatures(BaseModel):
 
     """
 
-    typename: Optional[Literal["Feature"]] = Field(alias="__typename")
+    typename: Optional[Literal["Feature"]] = Field(alias="__typename", exclude=True)
     id: ID
     key: str
     "The key of the feature"
     value: Optional[FeatureValue]
     "Value"
 
+    class Config:
+        frozen = True
+
 
 class DetailLabelFragment(BaseModel):
-    typename: Optional[Literal["Label"]] = Field(alias="__typename")
+    typename: Optional[Literal["Label"]] = Field(alias="__typename", exclude=True)
     id: ID
     instance: int
     "The instance value of the representation (pixel value). Must be a value of the image array"
     name: Optional[str]
     "The name of the instance"
-    features: Optional[List[Optional[DetailLabelFragmentFeatures]]]
+    features: Optional[Tuple[Optional[DetailLabelFragmentFeatures], ...]]
     "Features attached to this Label"
+
+    class Config:
+        frozen = True
 
 
 class MultiScaleSampleFragmentRepresentationsDerived(Representation, BaseModel):
     """A Representation is 5-dimensional representation of an image
 
-    Mikro stores each image as a 5-dimensional representation. The dimensions are:
+    Mikro stores each image as sa 5-dimensional representation. The dimensions are:
     - t: time
     - c: channel
     - z: z-stack
@@ -488,14 +547,19 @@ class MultiScaleSampleFragmentRepresentationsDerived(Representation, BaseModel):
 
     """
 
-    typename: Optional[Literal["Representation"]] = Field(alias="__typename")
+    typename: Optional[Literal["Representation"]] = Field(
+        alias="__typename", exclude=True
+    )
     store: Optional[Store]
+
+    class Config:
+        frozen = True
 
 
 class MultiScaleSampleFragmentRepresentations(Representation, BaseModel):
     """A Representation is 5-dimensional representation of an image
 
-    Mikro stores each image as a 5-dimensional representation. The dimensions are:
+    Mikro stores each image as sa 5-dimensional representation. The dimensions are:
     - t: time
     - c: channel
     - z: z-stack
@@ -525,24 +589,36 @@ class MultiScaleSampleFragmentRepresentations(Representation, BaseModel):
 
     """
 
-    typename: Optional[Literal["Representation"]] = Field(alias="__typename")
+    typename: Optional[Literal["Representation"]] = Field(
+        alias="__typename", exclude=True
+    )
     id: ID
     store: Optional[Store]
-    derived: Optional[List[Optional[MultiScaleSampleFragmentRepresentationsDerived]]]
+    derived: Optional[
+        Tuple[Optional[MultiScaleSampleFragmentRepresentationsDerived], ...]
+    ]
     "Derived Images from this Image"
+
+    class Config:
+        frozen = True
 
 
 class MultiScaleSampleFragment(BaseModel):
-    typename: Optional[Literal["Sample"]] = Field(alias="__typename")
+    typename: Optional[Literal["Sample"]] = Field(alias="__typename", exclude=True)
     id: ID
     name: str
     "The name of the sample"
-    representations: Optional[List[Optional[MultiScaleSampleFragmentRepresentations]]]
+    representations: Optional[
+        Tuple[Optional[MultiScaleSampleFragmentRepresentations], ...]
+    ]
     "Associated representations of this Sample"
+
+    class Config:
+        frozen = True
 
 
 class ROIFragmentVectors(BaseModel):
-    typename: Optional[Literal["Vector"]] = Field(alias="__typename")
+    typename: Optional[Literal["Vector"]] = Field(alias="__typename", exclude=True)
     x: Optional[float]
     "X-coordinate"
     y: Optional[float]
@@ -554,11 +630,14 @@ class ROIFragmentVectors(BaseModel):
     c: Optional[float]
     "C-coordinate"
 
+    class Config:
+        frozen = True
+
 
 class ROIFragmentRepresentation(Representation, BaseModel):
     """A Representation is 5-dimensional representation of an image
 
-    Mikro stores each image as a 5-dimensional representation. The dimensions are:
+    Mikro stores each image as sa 5-dimensional representation. The dimensions are:
     - t: time
     - c: channel
     - z: z-stack
@@ -588,8 +667,13 @@ class ROIFragmentRepresentation(Representation, BaseModel):
 
     """
 
-    typename: Optional[Literal["Representation"]] = Field(alias="__typename")
+    typename: Optional[Literal["Representation"]] = Field(
+        alias="__typename", exclude=True
+    )
     id: ID
+
+    class Config:
+        frozen = True
 
 
 class ROIFragmentCreator(BaseModel):
@@ -607,16 +691,19 @@ class ROIFragmentCreator(BaseModel):
 
     See the documentation for "Object Level Permissions" for more information."""
 
-    typename: Optional[Literal["User"]] = Field(alias="__typename")
+    typename: Optional[Literal["User"]] = Field(alias="__typename", exclude=True)
     id: ID
     color: str
     "The prefered color of the user"
 
+    class Config:
+        frozen = True
+
 
 class ROIFragment(ROI, BaseModel):
-    typename: Optional[Literal["ROI"]] = Field(alias="__typename")
+    typename: Optional[Literal["ROI"]] = Field(alias="__typename", exclude=True)
     id: ID
-    vectors: Optional[List[Optional[ROIFragmentVectors]]]
+    vectors: Optional[Tuple[Optional[ROIFragmentVectors], ...]]
     "The vectors of the ROI"
     type: ROIType
     "The Roi can have varying types, consult your API"
@@ -625,11 +712,14 @@ class ROIFragment(ROI, BaseModel):
     creator: ROIFragmentCreator
     "The user that created the ROI"
 
+    class Config:
+        frozen = True
+
 
 class MultiScaleRepresentationFragmentDerived(Representation, BaseModel):
     """A Representation is 5-dimensional representation of an image
 
-    Mikro stores each image as a 5-dimensional representation. The dimensions are:
+    Mikro stores each image as sa 5-dimensional representation. The dimensions are:
     - t: time
     - c: channel
     - z: z-stack
@@ -659,28 +749,41 @@ class MultiScaleRepresentationFragmentDerived(Representation, BaseModel):
 
     """
 
-    typename: Optional[Literal["Representation"]] = Field(alias="__typename")
+    typename: Optional[Literal["Representation"]] = Field(
+        alias="__typename", exclude=True
+    )
     name: Optional[str]
     "Cleartext name"
-    tags: Optional[List[Optional[str]]]
+    tags: Optional[Tuple[Optional[str], ...]]
     "A comma-separated list of tags."
     meta: Optional[Dict]
     store: Optional[Store]
 
+    class Config:
+        frozen = True
+
 
 class MultiScaleRepresentationFragment(Representation, BaseModel):
-    typename: Optional[Literal["Representation"]] = Field(alias="__typename")
-    derived: Optional[List[Optional[MultiScaleRepresentationFragmentDerived]]]
+    typename: Optional[Literal["Representation"]] = Field(
+        alias="__typename", exclude=True
+    )
+    derived: Optional[Tuple[Optional[MultiScaleRepresentationFragmentDerived], ...]]
     "Derived Images from this Image"
+
+    class Config:
+        frozen = True
 
 
 class RepresentationFragmentSample(BaseModel):
     """Samples are storage containers for representations. A Sample is to be understood analogous to a Biological Sample. It existed in Time (the time of acquisiton and experimental procedure), was measured in space (x,y,z) and in different modalities (c). Sample therefore provide a datacontainer where each Representation of the data shares the same dimensions. Every transaction to our image data is still part of the original acuqistion, so also filtered images are refering back to the sample"""
 
-    typename: Optional[Literal["Sample"]] = Field(alias="__typename")
+    typename: Optional[Literal["Sample"]] = Field(alias="__typename", exclude=True)
     id: ID
     name: str
     "The name of the sample"
+
+    class Config:
+        frozen = True
 
 
 class RepresentationFragmentOmero(BaseModel):
@@ -691,12 +794,17 @@ class RepresentationFragmentOmero(BaseModel):
 
     """
 
-    typename: Optional[Literal["Omero"]] = Field(alias="__typename")
-    scale: Optional[List[Optional[float]]]
+    typename: Optional[Literal["Omero"]] = Field(alias="__typename", exclude=True)
+    scale: Optional[Tuple[Optional[float], ...]]
+
+    class Config:
+        frozen = True
 
 
 class RepresentationFragment(Representation, BaseModel):
-    typename: Optional[Literal["Representation"]] = Field(alias="__typename")
+    typename: Optional[Literal["Representation"]] = Field(
+        alias="__typename", exclude=True
+    )
     sample: Optional[RepresentationFragmentSample]
     "The Sample this representation belosngs to"
     id: ID
@@ -707,20 +815,26 @@ class RepresentationFragment(Representation, BaseModel):
     "Cleartext name"
     omero: Optional[RepresentationFragmentOmero]
 
+    class Config:
+        frozen = True
+
 
 class RepresentationAndMaskFragmentSample(BaseModel):
     """Samples are storage containers for representations. A Sample is to be understood analogous to a Biological Sample. It existed in Time (the time of acquisiton and experimental procedure), was measured in space (x,y,z) and in different modalities (c). Sample therefore provide a datacontainer where each Representation of the data shares the same dimensions. Every transaction to our image data is still part of the original acuqistion, so also filtered images are refering back to the sample"""
 
-    typename: Optional[Literal["Sample"]] = Field(alias="__typename")
+    typename: Optional[Literal["Sample"]] = Field(alias="__typename", exclude=True)
     id: ID
     name: str
     "The name of the sample"
+
+    class Config:
+        frozen = True
 
 
 class RepresentationAndMaskFragmentDerived(Representation, BaseModel):
     """A Representation is 5-dimensional representation of an image
 
-    Mikro stores each image as a 5-dimensional representation. The dimensions are:
+    Mikro stores each image as sa 5-dimensional representation. The dimensions are:
     - t: time
     - c: channel
     - z: z-stack
@@ -750,13 +864,18 @@ class RepresentationAndMaskFragmentDerived(Representation, BaseModel):
 
     """
 
-    typename: Optional[Literal["Representation"]] = Field(alias="__typename")
+    typename: Optional[Literal["Representation"]] = Field(
+        alias="__typename", exclude=True
+    )
     id: ID
     store: Optional[Store]
     variety: RepresentationVariety
     "The Representation can have vasrying types, consult your API"
     name: Optional[str]
     "Cleartext name"
+
+    class Config:
+        frozen = True
 
 
 class RepresentationAndMaskFragmentOmero(BaseModel):
@@ -767,12 +886,17 @@ class RepresentationAndMaskFragmentOmero(BaseModel):
 
     """
 
-    typename: Optional[Literal["Omero"]] = Field(alias="__typename")
-    scale: Optional[List[Optional[float]]]
+    typename: Optional[Literal["Omero"]] = Field(alias="__typename", exclude=True)
+    scale: Optional[Tuple[Optional[float], ...]]
+
+    class Config:
+        frozen = True
 
 
 class RepresentationAndMaskFragment(Representation, BaseModel):
-    typename: Optional[Literal["Representation"]] = Field(alias="__typename")
+    typename: Optional[Literal["Representation"]] = Field(
+        alias="__typename", exclude=True
+    )
     sample: Optional[RepresentationAndMaskFragmentSample]
     "The Sample this representation belosngs to"
     id: ID
@@ -781,34 +905,48 @@ class RepresentationAndMaskFragment(Representation, BaseModel):
     "The Representation can have vasrying types, consult your API"
     name: Optional[str]
     "Cleartext name"
-    derived: Optional[List[Optional[RepresentationAndMaskFragmentDerived]]]
+    derived: Optional[Tuple[Optional[RepresentationAndMaskFragmentDerived], ...]]
     "Derived Images from this Image"
     omero: Optional[RepresentationAndMaskFragmentOmero]
+
+    class Config:
+        frozen = True
 
 
 class ListRepresentationFragmentSample(BaseModel):
     """Samples are storage containers for representations. A Sample is to be understood analogous to a Biological Sample. It existed in Time (the time of acquisiton and experimental procedure), was measured in space (x,y,z) and in different modalities (c). Sample therefore provide a datacontainer where each Representation of the data shares the same dimensions. Every transaction to our image data is still part of the original acuqistion, so also filtered images are refering back to the sample"""
 
-    typename: Optional[Literal["Sample"]] = Field(alias="__typename")
+    typename: Optional[Literal["Sample"]] = Field(alias="__typename", exclude=True)
     id: ID
     name: str
     "The name of the sample"
 
+    class Config:
+        frozen = True
+
 
 class ListRepresentationFragment(Representation, BaseModel):
-    typename: Optional[Literal["Representation"]] = Field(alias="__typename")
+    typename: Optional[Literal["Representation"]] = Field(
+        alias="__typename", exclude=True
+    )
     id: ID
     name: Optional[str]
     "Cleartext name"
     sample: Optional[ListRepresentationFragmentSample]
     "The Sample this representation belosngs to"
 
+    class Config:
+        frozen = True
+
 
 class Watch_roisSubscriptionRois(BaseModel):
-    typename: Optional[Literal["RoiEvent"]] = Field(alias="__typename")
+    typename: Optional[Literal["RoiEvent"]] = Field(alias="__typename", exclude=True)
     update: Optional[ROIFragment]
     delete: Optional[ID]
     create: Optional[ROIFragment]
+
+    class Config:
+        frozen = True
 
 
 class Watch_roisSubscription(BaseModel):
@@ -836,8 +974,13 @@ class Create_roiMutation(BaseModel):
 
 
 class Delete_roiMutationDeleteroi(BaseModel):
-    typename: Optional[Literal["DeleteROIResult"]] = Field(alias="__typename")
+    typename: Optional[Literal["DeleteROIResult"]] = Field(
+        alias="__typename", exclude=True
+    )
     id: Optional[str]
+
+    class Config:
+        frozen = True
 
 
 class Delete_roiMutation(BaseModel):
@@ -877,7 +1020,7 @@ class Expand_multiscaleQuery(BaseModel):
 
 
 class Get_roisQuery(BaseModel):
-    rois: Optional[List[Optional[ROIFragment]]]
+    rois: Optional[Tuple[Optional[ROIFragment], ...]]
     "All Rois\n    \n    This query returns all Rois that are stored on the platform\n    depending on the user's permissions. Generally, this query will return\n    all Rois that the user has access to. If the user is an amdin\n    or superuser, all Rois will be returned."
 
     class Arguments(BaseModel):
@@ -912,20 +1055,24 @@ class Search_roisQueryOptions(ROI, BaseModel):
 
     """
 
-    typename: Optional[Literal["ROI"]] = Field(alias="__typename")
+    typename: Optional[Literal["ROI"]] = Field(alias="__typename", exclude=True)
     label: ID
     value: ID
 
+    class Config:
+        frozen = True
+
 
 class Search_roisQuery(BaseModel):
-    options: Optional[List[Optional[Search_roisQueryOptions]]]
+    options: Optional[Tuple[Optional[Search_roisQueryOptions], ...]]
     "All Rois\n    \n    This query returns all Rois that are stored on the platform\n    depending on the user's permissions. Generally, this query will return\n    all Rois that the user has access to. If the user is an amdin\n    or superuser, all Rois will be returned."
 
     class Arguments(BaseModel):
         search: str
+        values: Optional[List[Optional[ID]]] = None
 
     class Meta:
-        document = "query search_rois($search: String!) {\n  options: rois(repname: $search) {\n    label: id\n    value: id\n  }\n}"
+        document = "query search_rois($search: String!, $values: [ID]) {\n  options: rois(repname: $search, ids: $values) {\n    label: id\n    value: id\n  }\n}"
 
 
 class Get_multiscale_repQuery(BaseModel):
@@ -962,7 +1109,7 @@ class Get_representation_and_maskQuery(BaseModel):
 
 
 class Get_some_representationsQuery(BaseModel):
-    representations: Optional[List[Optional[ListRepresentationFragment]]]
+    representations: Optional[Tuple[Optional[ListRepresentationFragment], ...]]
     "All Representations\n    \n    This query returns all Representations that are stored on the platform\n    depending on the user's permissions. Generally, this query will return\n    all Representations that the user has access to. If the user is an amdin\n    or superuser, all Representations will be returned."
 
     class Arguments(BaseModel):
@@ -975,7 +1122,7 @@ class Get_some_representationsQuery(BaseModel):
 class Get_image_stageQueryStagePositionsOmerosRepresentation(Representation, BaseModel):
     """A Representation is 5-dimensional representation of an image
 
-    Mikro stores each image as a 5-dimensional representation. The dimensions are:
+    Mikro stores each image as sa 5-dimensional representation. The dimensions are:
     - t: time
     - c: channel
     - z: z-stack
@@ -1005,10 +1152,15 @@ class Get_image_stageQueryStagePositionsOmerosRepresentation(Representation, Bas
 
     """
 
-    typename: Optional[Literal["Representation"]] = Field(alias="__typename")
+    typename: Optional[Literal["Representation"]] = Field(
+        alias="__typename", exclude=True
+    )
     id: ID
-    shape: Optional[List[int]]
+    shape: Optional[Tuple[int, ...]]
     "The arrays shape format [c,t,z,y,x]"
+
+    class Config:
+        frozen = True
 
 
 class Get_image_stageQueryStagePositionsOmeros(BaseModel):
@@ -1019,23 +1171,29 @@ class Get_image_stageQueryStagePositionsOmeros(BaseModel):
 
     """
 
-    typename: Optional[Literal["Omero"]] = Field(alias="__typename")
+    typename: Optional[Literal["Omero"]] = Field(alias="__typename", exclude=True)
     acquisition_date: Optional[datetime] = Field(alias="acquisitionDate")
     representation: Get_image_stageQueryStagePositionsOmerosRepresentation
+
+    class Config:
+        frozen = True
 
 
 class Get_image_stageQueryStagePositions(BaseModel):
     """The relative position of a sample on a microscope stage"""
 
-    typename: Optional[Literal["Position"]] = Field(alias="__typename")
+    typename: Optional[Literal["Position"]] = Field(alias="__typename", exclude=True)
     x: float
     "pixelSize for x in microns"
     y: float
     "pixelSize for y in microns"
     z: float
     "pixelSize for z in microns"
-    omeros: Optional[List[Optional[Get_image_stageQueryStagePositionsOmeros]]]
+    omeros: Optional[Tuple[Optional[Get_image_stageQueryStagePositionsOmeros], ...]]
     "Associated images through Omero"
+
+    class Config:
+        frozen = True
 
 
 class Get_image_stageQueryStage(BaseModel):
@@ -1045,8 +1203,11 @@ class Get_image_stageQueryStage(BaseModel):
 
     """
 
-    typename: Optional[Literal["Stage"]] = Field(alias="__typename")
-    positions: List[Get_image_stageQueryStagePositions]
+    typename: Optional[Literal["Stage"]] = Field(alias="__typename", exclude=True)
+    positions: Tuple[Get_image_stageQueryStagePositions, ...]
+
+    class Config:
+        frozen = True
 
 
 class Get_image_stageQuery(BaseModel):
@@ -1444,7 +1605,7 @@ def get_roi(id: ID, rath: MikroRath = None) -> Optional[ROIFragment]:
 
 
 async def asearch_rois(
-    search: str, rath: MikroRath = None
+    search: str, values: Optional[List[Optional[ID]]] = None, rath: MikroRath = None
 ) -> Optional[List[Optional[Search_roisQueryOptions]]]:
     """search_rois
 
@@ -1464,15 +1625,20 @@ async def asearch_rois(
 
     Arguments:
         search (str): search
+        values (Optional[List[Optional[ID]]], optional): values.
         rath (mikro.rath.MikroRath, optional): The mikro rath client
 
     Returns:
         Optional[List[Optional[Search_roisQueryRois]]]"""
-    return (await aexecute(Search_roisQuery, {"search": search}, rath=rath)).rois
+    return (
+        await aexecute(
+            Search_roisQuery, {"search": search, "values": values}, rath=rath
+        )
+    ).rois
 
 
 def search_rois(
-    search: str, rath: MikroRath = None
+    search: str, values: Optional[List[Optional[ID]]] = None, rath: MikroRath = None
 ) -> Optional[List[Optional[Search_roisQueryOptions]]]:
     """search_rois
 
@@ -1492,11 +1658,14 @@ def search_rois(
 
     Arguments:
         search (str): search
+        values (Optional[List[Optional[ID]]], optional): values.
         rath (mikro.rath.MikroRath, optional): The mikro rath client
 
     Returns:
         Optional[List[Optional[Search_roisQueryRois]]]"""
-    return execute(Search_roisQuery, {"search": search}, rath=rath).rois
+    return execute(
+        Search_roisQuery, {"search": search, "values": values}, rath=rath
+    ).rois
 
 
 async def aget_multiscale_rep(
@@ -1507,7 +1676,7 @@ async def aget_multiscale_rep(
 
      representation: A Representation is 5-dimensional representation of an image
 
-        Mikro stores each image as a 5-dimensional representation. The dimensions are:
+        Mikro stores each image as sa 5-dimensional representation. The dimensions are:
         - t: time
         - c: channel
         - z: z-stack
@@ -1557,7 +1726,7 @@ def get_multiscale_rep(
 
      representation: A Representation is 5-dimensional representation of an image
 
-        Mikro stores each image as a 5-dimensional representation. The dimensions are:
+        Mikro stores each image as sa 5-dimensional representation. The dimensions are:
         - t: time
         - c: channel
         - z: z-stack
@@ -1605,7 +1774,7 @@ async def aget_representation(
 
      representation: A Representation is 5-dimensional representation of an image
 
-        Mikro stores each image as a 5-dimensional representation. The dimensions are:
+        Mikro stores each image as sa 5-dimensional representation. The dimensions are:
         - t: time
         - c: channel
         - z: z-stack
@@ -1655,7 +1824,7 @@ def get_representation(
 
      representation: A Representation is 5-dimensional representation of an image
 
-        Mikro stores each image as a 5-dimensional representation. The dimensions are:
+        Mikro stores each image as sa 5-dimensional representation. The dimensions are:
         - t: time
         - c: channel
         - z: z-stack
@@ -1703,7 +1872,7 @@ async def aget_representation_and_mask(
 
      representation: A Representation is 5-dimensional representation of an image
 
-        Mikro stores each image as a 5-dimensional representation. The dimensions are:
+        Mikro stores each image as sa 5-dimensional representation. The dimensions are:
         - t: time
         - c: channel
         - z: z-stack
@@ -1753,7 +1922,7 @@ def get_representation_and_mask(
 
      representation: A Representation is 5-dimensional representation of an image
 
-        Mikro stores each image as a 5-dimensional representation. The dimensions are:
+        Mikro stores each image as sa 5-dimensional representation. The dimensions are:
         - t: time
         - c: channel
         - z: z-stack
@@ -1803,7 +1972,7 @@ async def aget_some_representations(
 
      representations: A Representation is 5-dimensional representation of an image
 
-        Mikro stores each image as a 5-dimensional representation. The dimensions are:
+        Mikro stores each image as sa 5-dimensional representation. The dimensions are:
         - t: time
         - c: channel
         - z: z-stack
@@ -1852,7 +2021,7 @@ def get_some_representations(
 
      representations: A Representation is 5-dimensional representation of an image
 
-        Mikro stores each image as a 5-dimensional representation. The dimensions are:
+        Mikro stores each image as sa 5-dimensional representation. The dimensions are:
         - t: time
         - c: channel
         - z: z-stack

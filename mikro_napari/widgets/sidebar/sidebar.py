@@ -2,25 +2,18 @@ import napari
 from koil.qt import QtRunner
 from mikro.api.schema import (
     ROIFragment,
-    RepresentationVariety,
-    Search_representationQuery,
-    afrom_xarray,
-    RepresentationFragment,
     aexpand_roi,
-    from_xarray,
 )
-import mikro
 from qtpy import QtWidgets
 from qtpy import QtCore
 from arkitekt.apps.connected import ConnectedApp
-import xarray as xr
 from mikro_napari.utils import NapariROI
 
 
 class RoiWidget(QtWidgets.QWidget):
     """A widget for displaying ROIs."""
 
-    def __init__(self, app: ConnectedApp, roi: NapariROI, *args, **kwargs):
+    def __init__(self, app: ConnectedApp, roi: NapariROI, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
         self._layout = QtWidgets.QVBoxLayout()
@@ -42,7 +35,7 @@ class SidebarWidget(QtWidgets.QWidget):
 
     def __init__(
         self, viewer: napari.Viewer, app: ConnectedApp = None, *args, **kwargs
-    ):
+    ) -> None:
         super(SidebarWidget, self).__init__(*args, **kwargs)
         self.viewer = viewer
         self.viewer.window.sidebar = self

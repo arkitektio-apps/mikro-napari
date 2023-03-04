@@ -1,5 +1,4 @@
 from pydantic import BaseModel, Field
-from napari.layers.image import Image
 from mikro.api.schema import RepresentationFragment
 import uuid
 
