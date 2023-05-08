@@ -1,5 +1,4 @@
 from typing import Dict, List, Optional
-from PyQt5.QtCore import QObject
 from qtpy import QtCore, QtWidgets
 from arkitekt.apps.connected import ConnectedApp
 from koil.qt import QtGenerator, QtRunner, QtGeneratorRunner, QtSignal, QtCoro, QtFuture
@@ -213,6 +212,8 @@ class RoiLayer(ManagedLayer):
         self.is_watching = False
         self._watch_rois_future = None
         self._napari_rois: List[NapariROI] = []
+        self._roi_layer = None
+        self.roi_state = {}
 
     def on_destroy(self):
         self.viewer.remove_layer(self.layer)
@@ -222,18 +223,11 @@ class RoiLayer(ManagedLayer):
             self._watch_rois_future.cancel()
 
     def show(self, fetch_rois=True, watch_rois=True):
-        self._roi_layer = self.viewer.add_shapes(
-            metadata={
-                "mikro": True,
-                "type": "ROIS",
-                "representation": self.image,
-            }
-        )
+        self._roi_layer = self.viewer.add_shapes()
         self._roi_layer.mouse_drag_callbacks.append(self.on_drag_roi_layer)
         self._roi_layer.mouse_double_click_callbacks.append(
             self.on_double_click_roi_layer
         )
-
         if fetch_rois:
             self.show_rois()
 
@@ -268,9 +262,8 @@ class RoiLayer(ManagedLayer):
                 [convert_roi_to_napari_roi(roi) for roi in self.roi_state.values()],
             )
         )
-
-        self._roi_layer.data = []
         self._roi_layer.name = f"ROIs for {self.image.name}"
+        self._roi_layer.data = []
 
         for i in self._napari_rois:
             self._roi_layer.add(

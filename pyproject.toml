@@ -10,8 +10,10 @@ packages = [{ include = "mikro_napari" }]
 classifiers = ["Framework :: napari"]
 
 [tool.poetry.dependencies]
-python = "^3.8"
-arkitekt = "^0.4.48"
+python = ">=3.8,<=3.12"
+arkitekt = "0.4.109"
+numpy = "<1.24"
+koil = "0.2.14"
 
 
 [tool.poetry.scripts]
