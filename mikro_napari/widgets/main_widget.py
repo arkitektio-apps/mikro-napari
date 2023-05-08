@@ -3,6 +3,7 @@ from rekuest.widgets import SearchWidget
 from koil.qt import QtRunner
 from mikro.api.schema import (
     RepresentationVariety,
+    from_xarray,
     afrom_xarray,
     RepresentationFragment,
 )
@@ -44,7 +45,9 @@ MULTISCALE_REPRESENTATIONS = SearchWidget(
 class MikroNapariWidget(QtWidgets.QWidget):
     emit_image: QtCore.Signal = QtCore.Signal(object)
 
-    def __init__(self, viewer: napari.Viewer, app: ConnectedApp, *args, **kwargs) -> None:
+    def __init__(
+        self, viewer: napari.Viewer, app: ConnectedApp, *args, **kwargs
+    ) -> None:
         super(MikroNapariWidget, self).__init__(*args, **kwargs)
 
         self.viewer = viewer
@@ -168,7 +171,7 @@ class MikroNapariWidget(QtWidgets.QWidget):
             self.upload_image_button.setText("Upload Layer")
             self.upload_image_button.setEnabled(False)
 
-    async def upload_layer(self, name: str = "") -> RepresentationFragment:
+    def upload_layer(self, name: str = "") -> RepresentationFragment:
         """Upload Napari Layer
 
         Upload the current image to the server.
@@ -200,11 +203,9 @@ class MikroNapariWidget(QtWidgets.QWidget):
             xarray = xr.DataArray(image_layer.data, dims=list("tzxy"))
 
         if image_layer.ndim == 5:
-            xarray = xr.DataArray(image_layer.data, dims=list("tzxyc"))
+            xarray = xr.DataArray(image_layer.data, dims=list("ctzyx"))
 
-        return await afrom_xarray(
-            xarray, name=name or image_layer.name, variety=variety
-        )
+        return from_xarray(xarray, name=name or image_layer.name, variety=variety)
 
     def cause_upload(self):
         for image_layer in self.active_non_mikro_layers:
@@ -234,7 +235,6 @@ class MikroNapariWidget(QtWidgets.QWidget):
         self.on_selection_changed()
 
     def cause_image_load(self):
-
         rep_dialog = OpenImageDialog(self)
         x = rep_dialog.exec()
         if x:

@@ -1,11 +1,19 @@
-from typing import Optional, Iterator, AsyncIterator, Literal, List, Tuple, Dict
-from mikro.funcs import execute, asubscribe, aexecute, subscribe
-from mikro.rath import MikroRath
-from mikro.traits import Vectorizable, ROI, Representation
-from mikro.scalars import AffineMatrix, FeatureValue, Store
-from pydantic import BaseModel, Field
-from rath.scalars import ID
+from mikro.scalars import Store, AffineMatrix, AssignationID, FeatureValue, MetricValue
 from datetime import datetime
+from mikro.funcs import aexecute, asubscribe, subscribe, execute
+from mikro.rath import MikroRath
+from pydantic import Field, BaseModel
+from typing import Iterator, Tuple, Dict, Literal, AsyncIterator, List, Optional
+from mikro.traits import (
+    Vectorizable,
+    PhysicalSize,
+    Stage,
+    Position,
+    Omero,
+    ROI,
+    Representation,
+)
+from rath.scalars import ID
 from enum import Enum
 
 
@@ -25,11 +33,17 @@ class CommentableModels(str, Enum):
     GRUNNLAG_MODEL = "GRUNNLAG_MODEL"
     GRUNNLAG_SAMPLE = "GRUNNLAG_SAMPLE"
     GRUNNLAG_STAGE = "GRUNNLAG_STAGE"
+    GRUNNLAG_CHANNEL = "GRUNNLAG_CHANNEL"
     GRUNNLAG_POSITION = "GRUNNLAG_POSITION"
+    GRUNNLAG_ERA = "GRUNNLAG_ERA"
+    GRUNNLAG_TIMEPOINT = "GRUNNLAG_TIMEPOINT"
     GRUNNLAG_REPRESENTATION = "GRUNNLAG_REPRESENTATION"
     GRUNNLAG_OMERO = "GRUNNLAG_OMERO"
+    GRUNNLAG_DIMENSIONMAP = "GRUNNLAG_DIMENSIONMAP"
+    GRUNNLAG_VIEW = "GRUNNLAG_VIEW"
     GRUNNLAG_METRIC = "GRUNNLAG_METRIC"
     GRUNNLAG_THUMBNAIL = "GRUNNLAG_THUMBNAIL"
+    GRUNNLAG_VIDEO = "GRUNNLAG_VIDEO"
     GRUNNLAG_ROI = "GRUNNLAG_ROI"
     GRUNNLAG_LABEL = "GRUNNLAG_LABEL"
     GRUNNLAG_FEATURE = "GRUNNLAG_FEATURE"
@@ -54,11 +68,17 @@ class SharableModels(str, Enum):
     GRUNNLAG_MODEL = "GRUNNLAG_MODEL"
     GRUNNLAG_SAMPLE = "GRUNNLAG_SAMPLE"
     GRUNNLAG_STAGE = "GRUNNLAG_STAGE"
+    GRUNNLAG_CHANNEL = "GRUNNLAG_CHANNEL"
     GRUNNLAG_POSITION = "GRUNNLAG_POSITION"
+    GRUNNLAG_ERA = "GRUNNLAG_ERA"
+    GRUNNLAG_TIMEPOINT = "GRUNNLAG_TIMEPOINT"
     GRUNNLAG_REPRESENTATION = "GRUNNLAG_REPRESENTATION"
     GRUNNLAG_OMERO = "GRUNNLAG_OMERO"
+    GRUNNLAG_DIMENSIONMAP = "GRUNNLAG_DIMENSIONMAP"
+    GRUNNLAG_VIEW = "GRUNNLAG_VIEW"
     GRUNNLAG_METRIC = "GRUNNLAG_METRIC"
     GRUNNLAG_THUMBNAIL = "GRUNNLAG_THUMBNAIL"
+    GRUNNLAG_VIDEO = "GRUNNLAG_VIDEO"
     GRUNNLAG_ROI = "GRUNNLAG_ROI"
     GRUNNLAG_LABEL = "GRUNNLAG_LABEL"
     GRUNNLAG_FEATURE = "GRUNNLAG_FEATURE"
@@ -112,11 +132,17 @@ class LinkableModels(str, Enum):
     GRUNNLAG_MODEL = "GRUNNLAG_MODEL"
     GRUNNLAG_SAMPLE = "GRUNNLAG_SAMPLE"
     GRUNNLAG_STAGE = "GRUNNLAG_STAGE"
+    GRUNNLAG_CHANNEL = "GRUNNLAG_CHANNEL"
     GRUNNLAG_POSITION = "GRUNNLAG_POSITION"
+    GRUNNLAG_ERA = "GRUNNLAG_ERA"
+    GRUNNLAG_TIMEPOINT = "GRUNNLAG_TIMEPOINT"
     GRUNNLAG_REPRESENTATION = "GRUNNLAG_REPRESENTATION"
     GRUNNLAG_OMERO = "GRUNNLAG_OMERO"
+    GRUNNLAG_DIMENSIONMAP = "GRUNNLAG_DIMENSIONMAP"
+    GRUNNLAG_VIEW = "GRUNNLAG_VIEW"
     GRUNNLAG_METRIC = "GRUNNLAG_METRIC"
     GRUNNLAG_THUMBNAIL = "GRUNNLAG_THUMBNAIL"
+    GRUNNLAG_VIDEO = "GRUNNLAG_VIDEO"
     GRUNNLAG_ROI = "GRUNNLAG_ROI"
     GRUNNLAG_LABEL = "GRUNNLAG_LABEL"
     GRUNNLAG_FEATURE = "GRUNNLAG_FEATURE"
@@ -137,6 +163,39 @@ class OmeroFileType(str, Enum):
     "Zeiss Microscopy File"
     UNKNOWN = "UNKNOWN"
     "Unwknon File Format"
+
+
+class RepresentationVarietyInput(str, Enum):
+    """Variety expresses the Type of Representation we are dealing with"""
+
+    MASK = "MASK"
+    "Mask (Value represent Labels)"
+    VOXEL = "VOXEL"
+    "Voxel (Value represent Intensity)"
+    RGB = "RGB"
+    "RGB (First three channel represent RGB)"
+    UNKNOWN = "UNKNOWN"
+    "Unknown"
+
+
+class PandasDType(str, Enum):
+    OBJECT = "OBJECT"
+    INT64 = "INT64"
+    FLOAT64 = "FLOAT64"
+    BOOL = "BOOL"
+    CATEGORY = "CATEGORY"
+    DATETIME65 = "DATETIME65"
+    TIMEDELTA = "TIMEDELTA"
+    UNICODE = "UNICODE"
+    DATETIME = "DATETIME"
+    DATETIMEZ = "DATETIMEZ"
+    DATETIMETZ = "DATETIMETZ"
+    DATETIME64 = "DATETIME64"
+    DATETIME64TZ = "DATETIME64TZ"
+    DATETIME64NS = "DATETIME64NS"
+    DATETIME64NSUTC = "DATETIME64NSUTC"
+    DATETIME64NSZ = "DATETIME64NSZ"
+    DATETIME64NSZUTC = "DATETIME64NSZUTC"
 
 
 class ROIType(str, Enum):
@@ -162,30 +221,6 @@ class ROIType(str, Enum):
     "Point"
 
 
-class RepresentationVarietyInput(str, Enum):
-    """Variety expresses the Type of Representation we are dealing with"""
-
-    MASK = "MASK"
-    "Mask (Value represent Labels)"
-    VOXEL = "VOXEL"
-    "Voxel (Value represent Intensity)"
-    RGB = "RGB"
-    "RGB (First three channel represent RGB)"
-    UNKNOWN = "UNKNOWN"
-    "Unknown"
-
-
-class PandasDType(str, Enum):
-    OBJECT = "OBJECT"
-    INT64 = "INT64"
-    FLOAT64 = "FLOAT64"
-    BOOL = "BOOL"
-    CATEGORY = "CATEGORY"
-    DATETIME65 = "DATETIME65"
-    TIMEDELTA = "TIMEDELTA"
-    UNICODE = "UNICODE"
-
-
 class RepresentationVariety(str, Enum):
     """An enumeration."""
 
@@ -197,6 +232,16 @@ class RepresentationVariety(str, Enum):
     "RGB (First three channel represent RGB)"
     UNKNOWN = "UNKNOWN"
     "Unknown"
+
+
+class Dimension(str, Enum):
+    """The dimension of the data"""
+
+    X = "X"
+    Y = "Y"
+    Z = "Z"
+    T = "T"
+    C = "C"
 
 
 class Medium(str, Enum):
@@ -302,11 +347,13 @@ class OmeroRepresentationInput(BaseModel):
     - Some parameters are ommited as they are not really used"""
 
     planes: Optional[Tuple[Optional["PlaneInput"], ...]]
+    maps: Optional[Tuple[Optional[ID], ...]]
+    timepoints: Optional[Tuple[Optional[ID], ...]]
     channels: Optional[Tuple[Optional["ChannelInput"], ...]]
     physical_size: Optional["PhysicalSizeInput"] = Field(alias="physicalSize")
     affine_transformation: Optional[AffineMatrix] = Field(alias="affineTransformation")
     scale: Optional[Tuple[Optional[float], ...]]
-    position: Optional[ID]
+    positions: Optional[Tuple[Optional[ID], ...]]
     acquisition_date: Optional[datetime] = Field(alias="acquisitionDate")
     objective_settings: Optional["ObjectiveSettingsInput"] = Field(
         alias="objectiveSettings"
@@ -455,6 +502,42 @@ class ImagingEnvironmentInput(BaseModel):
         use_enum_values = True
 
 
+class RepresentationViewInput(BaseModel):
+    z_min: Optional[int] = Field(alias="zMin")
+    "The x coord of the position (relative to origin)"
+    z_max: Optional[int] = Field(alias="zMax")
+    "The x coord of the position (relative to origin)"
+    t_min: Optional[int] = Field(alias="tMin")
+    "The x coord of the position (relative to origin)"
+    t_max: Optional[int] = Field(alias="tMax")
+    "The x coord of the position (relative to origin)"
+    c_min: Optional[int] = Field(alias="cMin")
+    "The x coord of the position (relative to origin)"
+    c_max: Optional[int] = Field(alias="cMax")
+    "The x coord of the position (relative to origin)"
+    x_min: Optional[int] = Field(alias="xMin")
+    "The x coord of the position (relative to origin)"
+    x_max: Optional[int] = Field(alias="xMax")
+    "The x coord of the position (relative to origin)"
+    y_min: Optional[int] = Field(alias="yMin")
+    "The x coord of the position (relative to origin)"
+    y_max: Optional[int] = Field(alias="yMax")
+    "The x coord of the position (relative to origin)"
+    channel: Optional[ID]
+    "The channel you want to associate with this map"
+    position: Optional[ID]
+    "The position you want to associate with this map"
+    timepoint: Optional[ID]
+    "The position you want to associate with this map"
+    created_while: Optional[AssignationID] = Field(alias="createdWhile")
+    "The assignation id"
+
+    class Config:
+        frozen = True
+        extra = "forbid"
+        use_enum_values = True
+
+
 class InputVector(Vectorizable, BaseModel):
     x: Optional[float]
     "X-coordinate"
@@ -466,6 +549,44 @@ class InputVector(Vectorizable, BaseModel):
     "C-coordinate"
     t: Optional[float]
     "T-coordinate"
+
+    class Config:
+        frozen = True
+        extra = "forbid"
+        use_enum_values = True
+
+
+class ViewInput(BaseModel):
+    omero: ID
+    "The stage this position belongs to"
+    z_min: Optional[int] = Field(alias="zMin")
+    "The x coord of the position (relative to origin)"
+    z_max: Optional[int] = Field(alias="zMax")
+    "The x coord of the position (relative to origin)"
+    t_min: Optional[int] = Field(alias="tMin")
+    "The x coord of the position (relative to origin)"
+    t_max: Optional[int] = Field(alias="tMax")
+    "The x coord of the position (relative to origin)"
+    c_min: Optional[int] = Field(alias="cMin")
+    "The x coord of the position (relative to origin)"
+    c_max: Optional[int] = Field(alias="cMax")
+    "The x coord of the position (relative to origin)"
+    x_min: Optional[int] = Field(alias="xMin")
+    "The x coord of the position (relative to origin)"
+    x_max: Optional[int] = Field(alias="xMax")
+    "The x coord of the position (relative to origin)"
+    y_min: Optional[int] = Field(alias="yMin")
+    "The x coord of the position (relative to origin)"
+    y_max: Optional[int] = Field(alias="yMax")
+    "The x coord of the position (relative to origin)"
+    channel: Optional[ID]
+    "The channel you want to associate with this map"
+    position: Optional[ID]
+    "The position you want to associate with this map"
+    timepoint: Optional[ID]
+    "The position you want to associate with this map"
+    created_while: Optional[AssignationID] = Field(alias="createdWhile")
+    "The assignation id"
 
     class Config:
         frozen = True
@@ -786,7 +907,7 @@ class RepresentationFragmentSample(BaseModel):
         frozen = True
 
 
-class RepresentationFragmentOmero(BaseModel):
+class RepresentationFragmentOmero(Omero, BaseModel):
     """Omero is a through model that stores the real world context of an image
 
     This means that it stores the position (corresponding to the relative displacement to
@@ -814,6 +935,306 @@ class RepresentationFragment(Representation, BaseModel):
     name: Optional[str]
     "Cleartext name"
     omero: Optional[RepresentationFragmentOmero]
+
+    class Config:
+        frozen = True
+
+
+class DetailRepresentationFragmentSample(BaseModel):
+    """Samples are storage containers for representations. A Sample is to be understood analogous to a Biological Sample. It existed in Time (the time of acquisiton and experimental procedure), was measured in space (x,y,z) and in different modalities (c). Sample therefore provide a datacontainer where each Representation of the data shares the same dimensions. Every transaction to our image data is still part of the original acuqistion, so also filtered images are refering back to the sample"""
+
+    typename: Optional[Literal["Sample"]] = Field(alias="__typename", exclude=True)
+    id: ID
+    name: str
+    "The name of the sample"
+
+    class Config:
+        frozen = True
+
+
+class DetailRepresentationFragmentOmeroPhysicalsize(PhysicalSize, BaseModel):
+    """Physical size of the image
+
+    Each dimensions of the image has a physical size. This is the size of the
+    pixel in the image. The physical size is given in micrometers on a PIXEL
+    basis. This means that the physical size of the image is the size of the
+    pixel in the image * the number of pixels in the image. For example, if
+    the image is 1000x1000 pixels and the physical size of the image is 3 (x params) x 3 (y params),
+    micrometer, the physical size of the image is 3000x3000 micrometer. If the image
+
+    The t dimension is given in ms, since the time is given in ms.
+    The C dimension is given in nm, since the wavelength is given in nm."""
+
+    typename: Optional[Literal["PhysicalSize"]] = Field(
+        alias="__typename", exclude=True
+    )
+    x: Optional[float]
+    "Physical size of *one* Pixel in the x dimension (in µm)"
+    y: Optional[float]
+    "Physical size of *one* Pixel in the t dimension (in µm)"
+    z: Optional[float]
+    "Physical size of *one* Pixel in the z dimension (in µm)"
+
+    class Config:
+        frozen = True
+
+
+class DetailRepresentationFragmentOmeroPositionsStage(Stage, BaseModel):
+    """An Stage is a set of positions that share a common space on a microscope and can
+    be use to translate.
+
+
+    """
+
+    typename: Optional[Literal["Stage"]] = Field(alias="__typename", exclude=True)
+    name: str
+    "The name of the stage"
+    id: ID
+
+    class Config:
+        frozen = True
+
+
+class DetailRepresentationFragmentOmeroPositions(Position, BaseModel):
+    """The relative position of a sample on a microscope stage"""
+
+    typename: Optional[Literal["Position"]] = Field(alias="__typename", exclude=True)
+    name: str
+    "The name of the possition"
+    id: ID
+    x: float
+    "pixelSize for x in microns"
+    y: float
+    "pixelSize for y in microns"
+    z: float
+    "pixelSize for z in microns"
+    stage: DetailRepresentationFragmentOmeroPositionsStage
+
+    class Config:
+        frozen = True
+
+
+class DetailRepresentationFragmentOmeroTimepointsEra(BaseModel):
+    """Era(id, created_by, created_through, created_while, name, start, end, created_at)"""
+
+    typename: Optional[Literal["Era"]] = Field(alias="__typename", exclude=True)
+    name: str
+    "The name of the era"
+    id: ID
+
+    class Config:
+        frozen = True
+
+
+class DetailRepresentationFragmentOmeroTimepoints(BaseModel):
+    """The relative position of a sample on a microscope stage"""
+
+    typename: Optional[Literal["Timepoint"]] = Field(alias="__typename", exclude=True)
+    name: Optional[str]
+    "The name of the timepoint"
+    id: ID
+    era: DetailRepresentationFragmentOmeroTimepointsEra
+
+    class Config:
+        frozen = True
+
+
+class DetailRepresentationFragmentOmeroViewsChannel(BaseModel):
+    """Channel(id, created_by, created_through, created_while, name, emission_wavelength, excitation_wavelength, acquisition_mode, color)"""
+
+    typename: Optional[Literal["Channel"]] = Field(alias="__typename", exclude=True)
+    name: str
+    "The name of the channel"
+    id: ID
+
+    class Config:
+        frozen = True
+
+
+class DetailRepresentationFragmentOmeroViewsPosition(Position, BaseModel):
+    """The relative position of a sample on a microscope stage"""
+
+    typename: Optional[Literal["Position"]] = Field(alias="__typename", exclude=True)
+    name: str
+    "The name of the possition"
+    id: ID
+    x: float
+    "pixelSize for x in microns"
+    y: float
+    "pixelSize for y in microns"
+    z: float
+    "pixelSize for z in microns"
+
+    class Config:
+        frozen = True
+
+
+class DetailRepresentationFragmentOmeroViewsTimepoint(BaseModel):
+    """The relative position of a sample on a microscope stage"""
+
+    typename: Optional[Literal["Timepoint"]] = Field(alias="__typename", exclude=True)
+    id: ID
+
+    class Config:
+        frozen = True
+
+
+class DetailRepresentationFragmentOmeroViews(BaseModel):
+    """View(id, created_by, created_through, created_while, omero, z_min, z_max, x_min, x_max, y_min, y_max, t_min, t_max, c_min, c_max, channel, position, objective, instrument, timepoint)"""
+
+    typename: Optional[Literal["View"]] = Field(alias="__typename", exclude=True)
+    channel: Optional[DetailRepresentationFragmentOmeroViewsChannel]
+    position: Optional[DetailRepresentationFragmentOmeroViewsPosition]
+    timepoint: Optional[DetailRepresentationFragmentOmeroViewsTimepoint]
+
+    class Config:
+        frozen = True
+
+
+class DetailRepresentationFragmentOmero(Omero, BaseModel):
+    """Omero is a through model that stores the real world context of an image
+
+    This means that it stores the position (corresponding to the relative displacement to
+    a stage (Both are models)), objective and other meta data of the image.
+
+    """
+
+    typename: Optional[Literal["Omero"]] = Field(alias="__typename", exclude=True)
+    physical_size: Optional[DetailRepresentationFragmentOmeroPhysicalsize] = Field(
+        alias="physicalSize"
+    )
+    positions: Tuple[DetailRepresentationFragmentOmeroPositions, ...]
+    timepoints: Optional[
+        Tuple[Optional[DetailRepresentationFragmentOmeroTimepoints], ...]
+    ]
+    "Associated Timepoints"
+    views: Optional[Tuple[Optional[DetailRepresentationFragmentOmeroViews], ...]]
+    "Associated views"
+
+    class Config:
+        frozen = True
+
+
+class DetailRepresentationFragmentMetricsRepresentation(Representation, BaseModel):
+    """A Representation is 5-dimensional representation of an image
+
+    Mikro stores each image as sa 5-dimensional representation. The dimensions are:
+    - t: time
+    - c: channel
+    - z: z-stack
+    - x: x-dimension
+    - y: y-dimension
+
+    This ensures a unified api for all images, regardless of their original dimensions. Another main
+    determining factor for a representation is its variety:
+    A representation can be a raw image representating voxels (VOXEL)
+    or a segmentation mask representing instances of a class. (MASK)
+    It can also representate a human perception of the image (RGB) or a human perception of the mask (RGBMASK)
+
+    # Meta
+
+    Meta information is stored in the omero field which gives access to the omero-meta data. Refer to the omero documentation for more information.
+
+
+    #Origins and Derivations
+
+    Images can be filtered, which means that a new representation is created from the other (original) representations. This new representation is then linked to the original representations. This way, we can always trace back to the original representation.
+    Both are encapsulaed in the origins and derived fields.
+
+    Representations belong to *one* sample. Every transaction to our image data is still part of the original acuqistion, so also filtered images are refering back to the sample
+    Each iamge has also a name, which is used to identify the image. The name is unique within a sample.
+    File and Rois that are used to create images are saved in the file origins and roi origins repectively.
+
+
+    """
+
+    typename: Optional[Literal["Representation"]] = Field(
+        alias="__typename", exclude=True
+    )
+    id: ID
+
+    class Config:
+        frozen = True
+
+
+class DetailRepresentationFragmentMetrics(BaseModel):
+    typename: Optional[Literal["Metric"]] = Field(alias="__typename", exclude=True)
+    id: ID
+    key: str
+    "The Key"
+    value: Optional[MetricValue]
+    "Value"
+    representation: Optional[DetailRepresentationFragmentMetricsRepresentation]
+    "The Representatoin this Metric belongs to"
+
+    class Config:
+        frozen = True
+
+
+class DetailRepresentationFragmentDerived(Representation, BaseModel):
+    """A Representation is 5-dimensional representation of an image
+
+    Mikro stores each image as sa 5-dimensional representation. The dimensions are:
+    - t: time
+    - c: channel
+    - z: z-stack
+    - x: x-dimension
+    - y: y-dimension
+
+    This ensures a unified api for all images, regardless of their original dimensions. Another main
+    determining factor for a representation is its variety:
+    A representation can be a raw image representating voxels (VOXEL)
+    or a segmentation mask representing instances of a class. (MASK)
+    It can also representate a human perception of the image (RGB) or a human perception of the mask (RGBMASK)
+
+    # Meta
+
+    Meta information is stored in the omero field which gives access to the omero-meta data. Refer to the omero documentation for more information.
+
+
+    #Origins and Derivations
+
+    Images can be filtered, which means that a new representation is created from the other (original) representations. This new representation is then linked to the original representations. This way, we can always trace back to the original representation.
+    Both are encapsulaed in the origins and derived fields.
+
+    Representations belong to *one* sample. Every transaction to our image data is still part of the original acuqistion, so also filtered images are refering back to the sample
+    Each iamge has also a name, which is used to identify the image. The name is unique within a sample.
+    File and Rois that are used to create images are saved in the file origins and roi origins repectively.
+
+
+    """
+
+    typename: Optional[Literal["Representation"]] = Field(
+        alias="__typename", exclude=True
+    )
+    id: ID
+    name: Optional[str]
+    "Cleartext name"
+    store: Optional[Store]
+
+    class Config:
+        frozen = True
+
+
+class DetailRepresentationFragment(Representation, BaseModel):
+    typename: Optional[Literal["Representation"]] = Field(
+        alias="__typename", exclude=True
+    )
+    sample: Optional[DetailRepresentationFragmentSample]
+    "The Sample this representation belosngs to"
+    id: ID
+    store: Optional[Store]
+    shape: Optional[Tuple[int, ...]]
+    "The arrays shape format [c,t,z,y,x]"
+    variety: RepresentationVariety
+    "The Representation can have vasrying types, consult your API"
+    name: Optional[str]
+    "Cleartext name"
+    omero: Optional[DetailRepresentationFragmentOmero]
+    metrics: Optional[Tuple[Optional[DetailRepresentationFragmentMetrics], ...]]
+    "Associated metrics of this Imasge"
+    derived: Optional[Tuple[Optional[DetailRepresentationFragmentDerived], ...]]
+    "Derived Images from this Image"
 
     class Config:
         frozen = True
@@ -878,7 +1299,7 @@ class RepresentationAndMaskFragmentDerived(Representation, BaseModel):
         frozen = True
 
 
-class RepresentationAndMaskFragmentOmero(BaseModel):
+class RepresentationAndMaskFragmentOmero(Omero, BaseModel):
     """Omero is a through model that stores the real world context of an image
 
     This means that it stores the position (corresponding to the relative displacement to
@@ -966,7 +1387,7 @@ class Create_roiMutation(BaseModel):
     class Arguments(BaseModel):
         representation: ID
         vectors: List[Optional[InputVector]]
-        creator: Optional[ID] = None
+        creator: Optional[ID]
         type: RoiTypeInput
 
     class Meta:
@@ -1008,6 +1429,145 @@ class Get_label_forQuery(BaseModel):
         document = "fragment DetailLabel on Label {\n  id\n  instance\n  name\n  features {\n    id\n    key\n    value\n  }\n}\n\nquery get_label_for($representation: ID!, $instance: Int!) {\n  labelFor(representation: $representation, instance: $instance) {\n    ...DetailLabel\n  }\n}"
 
 
+class Get_image_stageQueryStagePositionsOmerosRepresentation(Representation, BaseModel):
+    """A Representation is 5-dimensional representation of an image
+
+    Mikro stores each image as sa 5-dimensional representation. The dimensions are:
+    - t: time
+    - c: channel
+    - z: z-stack
+    - x: x-dimension
+    - y: y-dimension
+
+    This ensures a unified api for all images, regardless of their original dimensions. Another main
+    determining factor for a representation is its variety:
+    A representation can be a raw image representating voxels (VOXEL)
+    or a segmentation mask representing instances of a class. (MASK)
+    It can also representate a human perception of the image (RGB) or a human perception of the mask (RGBMASK)
+
+    # Meta
+
+    Meta information is stored in the omero field which gives access to the omero-meta data. Refer to the omero documentation for more information.
+
+
+    #Origins and Derivations
+
+    Images can be filtered, which means that a new representation is created from the other (original) representations. This new representation is then linked to the original representations. This way, we can always trace back to the original representation.
+    Both are encapsulaed in the origins and derived fields.
+
+    Representations belong to *one* sample. Every transaction to our image data is still part of the original acuqistion, so also filtered images are refering back to the sample
+    Each iamge has also a name, which is used to identify the image. The name is unique within a sample.
+    File and Rois that are used to create images are saved in the file origins and roi origins repectively.
+
+
+    """
+
+    typename: Optional[Literal["Representation"]] = Field(
+        alias="__typename", exclude=True
+    )
+    id: ID
+    shape: Optional[Tuple[int, ...]]
+    "The arrays shape format [c,t,z,y,x]"
+    store: Optional[Store]
+
+    class Config:
+        frozen = True
+
+
+class Get_image_stageQueryStagePositionsOmerosPhysicalsize(PhysicalSize, BaseModel):
+    """Physical size of the image
+
+    Each dimensions of the image has a physical size. This is the size of the
+    pixel in the image. The physical size is given in micrometers on a PIXEL
+    basis. This means that the physical size of the image is the size of the
+    pixel in the image * the number of pixels in the image. For example, if
+    the image is 1000x1000 pixels and the physical size of the image is 3 (x params) x 3 (y params),
+    micrometer, the physical size of the image is 3000x3000 micrometer. If the image
+
+    The t dimension is given in ms, since the time is given in ms.
+    The C dimension is given in nm, since the wavelength is given in nm."""
+
+    typename: Optional[Literal["PhysicalSize"]] = Field(
+        alias="__typename", exclude=True
+    )
+    x: Optional[float]
+    "Physical size of *one* Pixel in the x dimension (in µm)"
+    y: Optional[float]
+    "Physical size of *one* Pixel in the t dimension (in µm)"
+    z: Optional[float]
+    "Physical size of *one* Pixel in the z dimension (in µm)"
+    t: Optional[float]
+    "Physical size of *one* Pixel in the t dimension (in ms)"
+    c: Optional[float]
+    "Physical size of *one* Pixel in the c dimension (in µm)"
+
+    class Config:
+        frozen = True
+
+
+class Get_image_stageQueryStagePositionsOmeros(Omero, BaseModel):
+    """Omero is a through model that stores the real world context of an image
+
+    This means that it stores the position (corresponding to the relative displacement to
+    a stage (Both are models)), objective and other meta data of the image.
+
+    """
+
+    typename: Optional[Literal["Omero"]] = Field(alias="__typename", exclude=True)
+    id: ID
+    acquisition_date: Optional[datetime] = Field(alias="acquisitionDate")
+    representation: Get_image_stageQueryStagePositionsOmerosRepresentation
+    physical_size: Optional[
+        Get_image_stageQueryStagePositionsOmerosPhysicalsize
+    ] = Field(alias="physicalSize")
+
+    class Config:
+        frozen = True
+
+
+class Get_image_stageQueryStagePositions(Position, BaseModel):
+    """The relative position of a sample on a microscope stage"""
+
+    typename: Optional[Literal["Position"]] = Field(alias="__typename", exclude=True)
+    x: float
+    "pixelSize for x in microns"
+    y: float
+    "pixelSize for y in microns"
+    z: float
+    "pixelSize for z in microns"
+    omeros: Optional[Tuple[Optional[Get_image_stageQueryStagePositionsOmeros], ...]]
+    "Associated images through Omero"
+
+    class Config:
+        frozen = True
+
+
+class Get_image_stageQueryStage(Stage, BaseModel):
+    """An Stage is a set of positions that share a common space on a microscope and can
+    be use to translate.
+
+
+    """
+
+    typename: Optional[Literal["Stage"]] = Field(alias="__typename", exclude=True)
+    positions: Tuple[Get_image_stageQueryStagePositions, ...]
+
+    class Config:
+        frozen = True
+
+
+class Get_image_stageQuery(BaseModel):
+    stage: Optional[Get_image_stageQueryStage]
+    'Get a single experiment by ID"\n    \n    Returns a single experiment by ID. If the user does not have access\n    to the experiment, an error will be raised.\n    \n    '
+
+    class Arguments(BaseModel):
+        id: ID
+        limit: Optional[int]
+
+    class Meta:
+        document = 'query get_image_stage($id: ID!, $limit: Int) {\n  stage(id: $id) {\n    positions {\n      x\n      y\n      z\n      omeros(order: "-acquired", limit: $limit) {\n        id\n        acquisitionDate\n        representation {\n          id\n          shape\n          store\n        }\n        physicalSize {\n          x\n          y\n          z\n          t\n          c\n        }\n      }\n    }\n  }\n}'
+
+
 class Expand_multiscaleQuery(BaseModel):
     sample: Optional[MultiScaleSampleFragment]
     "Get a Sample by ID\n    \n    Returns a single Sample by ID. If the user does not have access\n    to the Sample, an error will be raised.\n    "
@@ -1025,7 +1585,7 @@ class Get_roisQuery(BaseModel):
 
     class Arguments(BaseModel):
         representation: ID
-        type: Optional[List[Optional[RoiTypeInput]]] = None
+        type: Optional[List[Optional[RoiTypeInput]]]
 
     class Meta:
         document = "fragment ROI on ROI {\n  id\n  vectors {\n    x\n    y\n    z\n    t\n    c\n  }\n  type\n  representation {\n    id\n  }\n  creator {\n    id\n    color\n  }\n}\n\nquery get_rois($representation: ID!, $type: [RoiTypeInput]) {\n  rois(representation: $representation, type: $type) {\n    ...ROI\n  }\n}"
@@ -1069,7 +1629,7 @@ class Search_roisQuery(BaseModel):
 
     class Arguments(BaseModel):
         search: str
-        values: Optional[List[Optional[ID]]] = None
+        values: Optional[List[Optional[ID]]]
 
     class Meta:
         document = "query search_rois($search: String!, $values: [ID]) {\n  options: rois(repname: $search, ids: $values) {\n    label: id\n    value: id\n  }\n}"
@@ -1119,107 +1679,15 @@ class Get_some_representationsQuery(BaseModel):
         document = 'fragment ListRepresentation on Representation {\n  id\n  name\n  sample {\n    id\n    name\n  }\n}\n\nquery get_some_representations {\n  representations(limit: 10, order: "-created_at") {\n    ...ListRepresentation\n  }\n}'
 
 
-class Get_image_stageQueryStagePositionsOmerosRepresentation(Representation, BaseModel):
-    """A Representation is 5-dimensional representation of an image
-
-    Mikro stores each image as sa 5-dimensional representation. The dimensions are:
-    - t: time
-    - c: channel
-    - z: z-stack
-    - x: x-dimension
-    - y: y-dimension
-
-    This ensures a unified api for all images, regardless of their original dimensions. Another main
-    determining factor for a representation is its variety:
-    A representation can be a raw image representating voxels (VOXEL)
-    or a segmentation mask representing instances of a class. (MASK)
-    It can also representate a human perception of the image (RGB) or a human perception of the mask (RGBMASK)
-
-    # Meta
-
-    Meta information is stored in the omero field which gives access to the omero-meta data. Refer to the omero documentation for more information.
-
-
-    #Origins and Derivations
-
-    Images can be filtered, which means that a new representation is created from the other (original) representations. This new representation is then linked to the original representations. This way, we can always trace back to the original representation.
-    Both are encapsulaed in the origins and derived fields.
-
-    Representations belong to *one* sample. Every transaction to our image data is still part of the original acuqistion, so also filtered images are refering back to the sample
-    Each iamge has also a name, which is used to identify the image. The name is unique within a sample.
-    File and Rois that are used to create images are saved in the file origins and roi origins repectively.
-
-
-    """
-
-    typename: Optional[Literal["Representation"]] = Field(
-        alias="__typename", exclude=True
-    )
-    id: ID
-    shape: Optional[Tuple[int, ...]]
-    "The arrays shape format [c,t,z,y,x]"
-
-    class Config:
-        frozen = True
-
-
-class Get_image_stageQueryStagePositionsOmeros(BaseModel):
-    """Omero is a through model that stores the real world context of an image
-
-    This means that it stores the position (corresponding to the relative displacement to
-    a stage (Both are models)), objective and other meta data of the image.
-
-    """
-
-    typename: Optional[Literal["Omero"]] = Field(alias="__typename", exclude=True)
-    acquisition_date: Optional[datetime] = Field(alias="acquisitionDate")
-    representation: Get_image_stageQueryStagePositionsOmerosRepresentation
-
-    class Config:
-        frozen = True
-
-
-class Get_image_stageQueryStagePositions(BaseModel):
-    """The relative position of a sample on a microscope stage"""
-
-    typename: Optional[Literal["Position"]] = Field(alias="__typename", exclude=True)
-    x: float
-    "pixelSize for x in microns"
-    y: float
-    "pixelSize for y in microns"
-    z: float
-    "pixelSize for z in microns"
-    omeros: Optional[Tuple[Optional[Get_image_stageQueryStagePositionsOmeros], ...]]
-    "Associated images through Omero"
-
-    class Config:
-        frozen = True
-
-
-class Get_image_stageQueryStage(BaseModel):
-    """An Stage is a set of positions that share a common space on a microscope and can
-    be use to translate.
-
-
-    """
-
-    typename: Optional[Literal["Stage"]] = Field(alias="__typename", exclude=True)
-    positions: Tuple[Get_image_stageQueryStagePositions, ...]
-
-    class Config:
-        frozen = True
-
-
-class Get_image_stageQuery(BaseModel):
-    stage: Optional[Get_image_stageQueryStage]
-    'Get a single experiment by ID"\n    \n    Returns a single experiment by ID. If the user does not have access\n    to the experiment, an error will be raised.\n    \n    '
+class DetailRepQuery(BaseModel):
+    representation: Optional[DetailRepresentationFragment]
+    "Get a single Representation by ID\n    \n    Returns a single Representation by ID. If the user does not have access\n    to the Representation, an error will be raised.\n    "
 
     class Arguments(BaseModel):
         id: ID
-        limit: Optional[int] = None
 
     class Meta:
-        document = 'query get_image_stage($id: ID!, $limit: Int) {\n  stage(id: $id) {\n    positions {\n      x\n      y\n      z\n      omeros(order: "-acquired", limit: $limit) {\n        acquisitionDate\n        representation {\n          id\n          shape\n        }\n      }\n    }\n  }\n}'
+        document = "fragment DetailRepresentation on Representation {\n  sample {\n    id\n    name\n  }\n  id\n  store\n  shape\n  variety\n  name\n  omero {\n    physicalSize {\n      x\n      y\n      z\n    }\n    positions {\n      name\n      id\n      x\n      y\n      z\n      stage {\n        name\n        id\n      }\n    }\n    timepoints {\n      name\n      id\n      era {\n        name\n        id\n      }\n    }\n    views {\n      channel {\n        name\n        id\n      }\n      position {\n        name\n        id\n        x\n        y\n        z\n      }\n      timepoint {\n        id\n      }\n    }\n  }\n  metrics(flatten: 3) {\n    id\n    key\n    value\n    representation {\n      id\n    }\n  }\n  derived(flatten: 3) {\n    id\n    name\n    store\n  }\n}\n\nquery DetailRep($id: ID!) {\n  representation(id: $id) {\n    ...DetailRepresentation\n  }\n}"
 
 
 async def awatch_rois(
@@ -1446,6 +1914,54 @@ def get_label_for(
         {"representation": representation, "instance": instance},
         rath=rath,
     ).label_for
+
+
+async def aget_image_stage(
+    id: ID, limit: Optional[int] = None, rath: MikroRath = None
+) -> Optional[Get_image_stageQueryStage]:
+    """get_image_stage
+
+
+     stage: An Stage is a set of positions that share a common space on a microscope and can
+        be use to translate.
+
+
+
+
+
+    Arguments:
+        id (ID): id
+        limit (Optional[int], optional): limit.
+        rath (mikro.rath.MikroRath, optional): The mikro rath client
+
+    Returns:
+        Optional[Get_image_stageQueryStage]"""
+    return (
+        await aexecute(Get_image_stageQuery, {"id": id, "limit": limit}, rath=rath)
+    ).stage
+
+
+def get_image_stage(
+    id: ID, limit: Optional[int] = None, rath: MikroRath = None
+) -> Optional[Get_image_stageQueryStage]:
+    """get_image_stage
+
+
+     stage: An Stage is a set of positions that share a common space on a microscope and can
+        be use to translate.
+
+
+
+
+
+    Arguments:
+        id (ID): id
+        limit (Optional[int], optional): limit.
+        rath (mikro.rath.MikroRath, optional): The mikro rath client
+
+    Returns:
+        Optional[Get_image_stageQueryStage]"""
+    return execute(Get_image_stageQuery, {"id": id, "limit": limit}, rath=rath).stage
 
 
 async def aexpand_multiscale(
@@ -2060,14 +2576,40 @@ def get_some_representations(
     return execute(Get_some_representationsQuery, {}, rath=rath).representations
 
 
-async def aget_image_stage(
-    id: ID, limit: Optional[int] = None, rath: MikroRath = None
-) -> Optional[Get_image_stageQueryStage]:
-    """get_image_stage
+async def adetail_rep(
+    id: ID, rath: MikroRath = None
+) -> Optional[DetailRepresentationFragment]:
+    """DetailRep
 
 
-     stage: An Stage is a set of positions that share a common space on a microscope and can
-        be use to translate.
+     representation: A Representation is 5-dimensional representation of an image
+
+        Mikro stores each image as sa 5-dimensional representation. The dimensions are:
+        - t: time
+        - c: channel
+        - z: z-stack
+        - x: x-dimension
+        - y: y-dimension
+
+        This ensures a unified api for all images, regardless of their original dimensions. Another main
+        determining factor for a representation is its variety:
+        A representation can be a raw image representating voxels (VOXEL)
+        or a segmentation mask representing instances of a class. (MASK)
+        It can also representate a human perception of the image (RGB) or a human perception of the mask (RGBMASK)
+
+        # Meta
+
+        Meta information is stored in the omero field which gives access to the omero-meta data. Refer to the omero documentation for more information.
+
+
+        #Origins and Derivations
+
+        Images can be filtered, which means that a new representation is created from the other (original) representations. This new representation is then linked to the original representations. This way, we can always trace back to the original representation.
+        Both are encapsulaed in the origins and derived fields.
+
+        Representations belong to *one* sample. Every transaction to our image data is still part of the original acuqistion, so also filtered images are refering back to the sample
+        Each iamge has also a name, which is used to identify the image. The name is unique within a sample.
+        File and Rois that are used to create images are saved in the file origins and roi origins repectively.
 
 
 
@@ -2075,24 +2617,47 @@ async def aget_image_stage(
 
     Arguments:
         id (ID): id
-        limit (Optional[int], optional): limit.
         rath (mikro.rath.MikroRath, optional): The mikro rath client
 
     Returns:
-        Optional[Get_image_stageQueryStage]"""
-    return (
-        await aexecute(Get_image_stageQuery, {"id": id, "limit": limit}, rath=rath)
-    ).stage
+        Optional[DetailRepresentationFragment]"""
+    return (await aexecute(DetailRepQuery, {"id": id}, rath=rath)).representation
 
 
-def get_image_stage(
-    id: ID, limit: Optional[int] = None, rath: MikroRath = None
-) -> Optional[Get_image_stageQueryStage]:
-    """get_image_stage
+def detail_rep(
+    id: ID, rath: MikroRath = None
+) -> Optional[DetailRepresentationFragment]:
+    """DetailRep
 
 
-     stage: An Stage is a set of positions that share a common space on a microscope and can
-        be use to translate.
+     representation: A Representation is 5-dimensional representation of an image
+
+        Mikro stores each image as sa 5-dimensional representation. The dimensions are:
+        - t: time
+        - c: channel
+        - z: z-stack
+        - x: x-dimension
+        - y: y-dimension
+
+        This ensures a unified api for all images, regardless of their original dimensions. Another main
+        determining factor for a representation is its variety:
+        A representation can be a raw image representating voxels (VOXEL)
+        or a segmentation mask representing instances of a class. (MASK)
+        It can also representate a human perception of the image (RGB) or a human perception of the mask (RGBMASK)
+
+        # Meta
+
+        Meta information is stored in the omero field which gives access to the omero-meta data. Refer to the omero documentation for more information.
+
+
+        #Origins and Derivations
+
+        Images can be filtered, which means that a new representation is created from the other (original) representations. This new representation is then linked to the original representations. This way, we can always trace back to the original representation.
+        Both are encapsulaed in the origins and derived fields.
+
+        Representations belong to *one* sample. Every transaction to our image data is still part of the original acuqistion, so also filtered images are refering back to the sample
+        Each iamge has also a name, which is used to identify the image. The name is unique within a sample.
+        File and Rois that are used to create images are saved in the file origins and roi origins repectively.
 
 
 
@@ -2100,12 +2665,11 @@ def get_image_stage(
 
     Arguments:
         id (ID): id
-        limit (Optional[int], optional): limit.
         rath (mikro.rath.MikroRath, optional): The mikro rath client
 
     Returns:
-        Optional[Get_image_stageQueryStage]"""
-    return execute(Get_image_stageQuery, {"id": id, "limit": limit}, rath=rath).stage
+        Optional[DetailRepresentationFragment]"""
+    return execute(DetailRepQuery, {"id": id}, rath=rath).representation
 
 
 DescendendInput.update_forward_refs()

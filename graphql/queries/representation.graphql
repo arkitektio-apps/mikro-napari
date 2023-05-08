@@ -21,3 +21,9 @@ query get_some_representations {
     ...ListRepresentation
   }
 }
+
+query DetailRep($id: ID!) {
+  representation(id: $id) {
+    ...DetailRepresentation
+  }
+}
