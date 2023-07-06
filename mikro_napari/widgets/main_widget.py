@@ -91,58 +91,58 @@ class MikroNapariWidget(QtWidgets.QWidget):
 
         self.viewer.layers.selection.events.active.connect(self.on_selection_changed)
 
-        self.app.rekuest.definition_registry.register(
+        self.app.rekuest.register(
             self.representation_controller.on_image_loaded,
-            self.app.rekuest.structure_registry,
             actifier=qtinloopactifier,
             parent=self,
+            collections=["display", "interactive"],
         )
-        self.app.rekuest.definition_registry.register(
+        self.app.rekuest.register(
             self.representation_controller.open_feature,
-            self.app.rekuest.structure_registry,
             actifier=qtinloopactifier,
             parent=self,
+            collections=["display", "interactive"],
         )
-        self.app.rekuest.definition_registry.register(
+        self.app.rekuest.register(
             self.representation_controller.open_metric,
-            self.app.rekuest.structure_registry,
             actifier=qtinloopactifier,
             parent=self,
+            collections=["display", "interactive"],
         )
-        self.app.rekuest.definition_registry.register(
+        self.app.rekuest.register(
             self.representation_controller.open_label,
-            self.app.rekuest.structure_registry,
             actifier=qtinloopactifier,
             parent=self,
+            collections=["display", "interactive"],
         )
 
-        self.app.rekuest.definition_registry.register(
+        self.app.rekuest.register(
             self.representation_controller.tile_images,
-            self.app.rekuest.structure_registry,
             actifier=qtinloopactifier,
             parent=self,
+            collections=["display", "interactive"],
         )
-        self.app.rekuest.definition_registry.register(
+        self.app.rekuest.register(
             self.representation_controller.open_position,
-            self.app.rekuest.structure_registry,
             actifier=qtinloopactifier,
             parent=self,
+            collections=["display", "interactive"],
         )
-        self.app.rekuest.definition_registry.register(
+        self.app.rekuest.register(
             self.representation_controller.open_stage,
-            self.app.rekuest.structure_registry,
             actifier=qtinloopactifier,
             parent=self,
+            collections=["display", "interactive"],
         )
-        self.app.rekuest.definition_registry.register(
+        self.app.rekuest.register(
             self.upload_layer,
-            self.app.rekuest.structure_registry,
             actifier=qtinloopactifier,
             parent=self,
+            collections=["upload", "interactive"],
         )
-        self.app.rekuest.definition_registry.register(
+        self.app.rekuest.register(
             self.representation_controller.stream_rois,
-            self.app.rekuest.structure_registry,
+            collections=["creation", "interactive"],
         )
 
     def on_app_up(self):

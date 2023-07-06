@@ -5,17 +5,15 @@ import argparse
 from mikro_napari.widgets.sidebar.sidebar import SidebarWidget
 import os
 from arkitekt.builders import publicqt
+from mikro_napari.manifest import identifier, version, logo
 
 
 def main(**kwargs):
     os.environ["NAPARI_ASYNC"] = "1"
 
-    identifier = "github.io.jhnnsrs.mikro-napari"
-    version = "latest"
-
     viewer = napari.Viewer()
 
-    app = publicqt(identifier, version, parent=viewer.window.qt_viewer)
+    app = publicqt(identifier, version, parent=viewer.window.qt_viewer, logo=logo)
 
     widget = MikroNapariWidget(viewer, app, **kwargs)
     sidebar = SidebarWidget(viewer, app, **kwargs)

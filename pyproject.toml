@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mikro-napari"
-version = "0.1.50"
+version = "0.1.52"
 description = "A napari plugin to interact with and provide functionality for a connected arkitekt server"
 readme = "README.md"
 repository = "https://github.com/jhnnsrs/mikro-napari"
@@ -11,7 +11,7 @@ classifiers = ["Framework :: napari"]
 
 [tool.poetry.dependencies]
 python = ">=3.8,<=3.12"
-arkitekt = "0.4.109"
+arkitekt = "0.4.124"
 numpy = "<1.24"
 koil = "0.2.14"
 
@@ -20,9 +20,7 @@ koil = "0.2.14"
 mikro-napari = "mikro_napari.run:main"
 
 [tool.mypy]
-exclude = [
-    "venv/"
-]
+exclude = ["venv/"]
 ignore_missing_imports = true
 
 

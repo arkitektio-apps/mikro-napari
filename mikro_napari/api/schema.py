@@ -1,19 +1,19 @@
-from mikro.scalars import Store, AffineMatrix, AssignationID, FeatureValue, MetricValue
-from datetime import datetime
-from mikro.funcs import aexecute, asubscribe, subscribe, execute
-from mikro.rath import MikroRath
-from pydantic import Field, BaseModel
-from typing import Iterator, Tuple, Dict, Literal, AsyncIterator, List, Optional
 from mikro.traits import (
-    Vectorizable,
-    PhysicalSize,
-    Stage,
-    Position,
-    Omero,
-    ROI,
     Representation,
+    Omero,
+    Position,
+    PhysicalSize,
+    ROI,
+    Stage,
+    Vectorizable,
 )
+from typing import Literal, List, Tuple, Optional, AsyncIterator, Dict, Iterator
+from mikro.scalars import FeatureValue, Store, AssignationID, MetricValue, AffineMatrix
+from mikro.rath import MikroRath
+from datetime import datetime
 from rath.scalars import ID
+from mikro.funcs import execute, subscribe, asubscribe, aexecute
+from pydantic import BaseModel, Field
 from enum import Enum
 
 
@@ -21,6 +21,7 @@ class CommentableModels(str, Enum):
     GRUNNLAG_USERMETA = "GRUNNLAG_USERMETA"
     GRUNNLAG_ANTIBODY = "GRUNNLAG_ANTIBODY"
     GRUNNLAG_OBJECTIVE = "GRUNNLAG_OBJECTIVE"
+    GRUNNLAG_CAMERA = "GRUNNLAG_CAMERA"
     GRUNNLAG_INSTRUMENT = "GRUNNLAG_INSTRUMENT"
     GRUNNLAG_DATASET = "GRUNNLAG_DATASET"
     GRUNNLAG_EXPERIMENT = "GRUNNLAG_EXPERIMENT"
@@ -48,6 +49,7 @@ class CommentableModels(str, Enum):
     GRUNNLAG_LABEL = "GRUNNLAG_LABEL"
     GRUNNLAG_FEATURE = "GRUNNLAG_FEATURE"
     BORD_TABLE = "BORD_TABLE"
+    BORD_GRAPH = "BORD_GRAPH"
 
 
 class SharableModels(str, Enum):
@@ -56,6 +58,7 @@ class SharableModels(str, Enum):
     GRUNNLAG_USERMETA = "GRUNNLAG_USERMETA"
     GRUNNLAG_ANTIBODY = "GRUNNLAG_ANTIBODY"
     GRUNNLAG_OBJECTIVE = "GRUNNLAG_OBJECTIVE"
+    GRUNNLAG_CAMERA = "GRUNNLAG_CAMERA"
     GRUNNLAG_INSTRUMENT = "GRUNNLAG_INSTRUMENT"
     GRUNNLAG_DATASET = "GRUNNLAG_DATASET"
     GRUNNLAG_EXPERIMENT = "GRUNNLAG_EXPERIMENT"
@@ -83,6 +86,7 @@ class SharableModels(str, Enum):
     GRUNNLAG_LABEL = "GRUNNLAG_LABEL"
     GRUNNLAG_FEATURE = "GRUNNLAG_FEATURE"
     BORD_TABLE = "BORD_TABLE"
+    BORD_GRAPH = "BORD_GRAPH"
 
 
 class LokClientGrantType(str, Enum):
@@ -120,6 +124,7 @@ class LinkableModels(str, Enum):
     GRUNNLAG_USERMETA = "GRUNNLAG_USERMETA"
     GRUNNLAG_ANTIBODY = "GRUNNLAG_ANTIBODY"
     GRUNNLAG_OBJECTIVE = "GRUNNLAG_OBJECTIVE"
+    GRUNNLAG_CAMERA = "GRUNNLAG_CAMERA"
     GRUNNLAG_INSTRUMENT = "GRUNNLAG_INSTRUMENT"
     GRUNNLAG_DATASET = "GRUNNLAG_DATASET"
     GRUNNLAG_EXPERIMENT = "GRUNNLAG_EXPERIMENT"
@@ -147,6 +152,7 @@ class LinkableModels(str, Enum):
     GRUNNLAG_LABEL = "GRUNNLAG_LABEL"
     GRUNNLAG_FEATURE = "GRUNNLAG_FEATURE"
     BORD_TABLE = "BORD_TABLE"
+    BORD_GRAPH = "BORD_GRAPH"
     PLOTQL_PLOT = "PLOTQL_PLOT"
 
 
@@ -221,19 +227,6 @@ class ROIType(str, Enum):
     "Point"
 
 
-class RepresentationVariety(str, Enum):
-    """An enumeration."""
-
-    MASK = "MASK"
-    "Mask (Value represent Labels)"
-    VOXEL = "VOXEL"
-    "Voxel (Value represent Intensity)"
-    RGB = "RGB"
-    "RGB (First three channel represent RGB)"
-    UNKNOWN = "UNKNOWN"
-    "Unknown"
-
-
 class Dimension(str, Enum):
     """The dimension of the data"""
 
@@ -254,6 +247,19 @@ class Medium(str, Enum):
     OIL = "OIL"
     OTHER = "OTHER"
     WATER = "WATER"
+
+
+class RepresentationVariety(str, Enum):
+    """An enumeration."""
+
+    MASK = "MASK"
+    "Mask (Value represent Labels)"
+    VOXEL = "VOXEL"
+    "Voxel (Value represent Intensity)"
+    RGB = "RGB"
+    "RGB (First three channel represent RGB)"
+    UNKNOWN = "UNKNOWN"
+    "Unknown"
 
 
 class RoiTypeInput(str, Enum):
@@ -354,6 +360,7 @@ class OmeroRepresentationInput(BaseModel):
     affine_transformation: Optional[AffineMatrix] = Field(alias="affineTransformation")
     scale: Optional[Tuple[Optional[float], ...]]
     positions: Optional[Tuple[Optional[ID], ...]]
+    cameras: Optional[Tuple[Optional[ID], ...]]
     acquisition_date: Optional[datetime] = Field(alias="acquisitionDate")
     objective_settings: Optional["ObjectiveSettingsInput"] = Field(
         alias="objectiveSettings"

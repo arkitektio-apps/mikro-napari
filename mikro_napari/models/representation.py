@@ -19,7 +19,7 @@ from mikro.api.schema import (
     Create_roiMutation,
     aget_rois,
     awatch_rois,
-    RepresentationFragmentOmeroPhysicalsize,
+    OmeroFragmentPhysicalsize,
     PositionFragment,
 )
 import asyncio
@@ -61,7 +61,7 @@ DOUBLE_CLICK_MODE_MAP = {
 def top_left_in_view(
     position: PositionFragment,
     image: RepresentationFragment,
-    physical_size: RepresentationFragmentOmeroPhysicalsize,
+    physical_size: OmeroFragmentPhysicalsize,
 ):
     """Caluclate the top left corner of the image in world coordinates.
 
@@ -319,11 +319,12 @@ class RoiLayer(ManagedLayer):
                 )
 
         if len(self._roi_layer.data) < len(self._napari_rois):
-            there_rois = set([f for f in self._roi_layer.features["roi"]])
-            state_rois = set([f.id for f in self._napari_rois])
-            difference_rois = state_rois - there_rois
-            for roi_id in difference_rois:
-                self.delete_rois_runner.run(roi_id)
+            if "roi" in self._roi_layer.features:
+                there_rois = set([f for f in self._roi_layer.features["roi"]])
+                state_rois = set([f.id for f in self._napari_rois])
+                difference_rois = state_rois - there_rois
+                for roi_id in difference_rois:
+                    self.delete_rois_runner.run(roi_id)
 
     def on_double_click_roi_layer(self, layer, event):
         print("double clicked")
@@ -360,6 +361,10 @@ class ImageLayer(ManagedLayer):
             raise NotImplementedError
 
         scale = None
+
+        if self.managed_image.omero and self.managed_image.omero.physical_size:
+            # scale = self.managed_image.omero.physical_size.to_scale()
+            pass
 
         if self.managed_image.variety == RepresentationVariety.RGB:
             self._image_layer = self.viewer.add_image(
@@ -554,21 +559,25 @@ class RepresentationQtModel(QtCore.QObject):
             )
         )
         for i, view_data in enumerate(view_datas):
-            x = view_data.sel(t=0, c=0).data
+            x = view_data.sel(t=0, c=0)
+
+            z1 = math.floor(top_left_offsets[i][0])
+            y1 = math.floor(top_left_offsets[i][1])
+            x1 = math.floor(top_left_offsets[i][2])
+
+            z2 = z1 + x.sizes["z"]
+            y2 = y1 + x.sizes["y"]
+            x2 = x1 + x.sizes["x"]
+
+            print(z1, z2, y1, y2, x1, x2)
 
             image[
                 0,
                 0,
-                math.floor(top_left_offsets[i][0]) : math.floor(
-                    bottom_right_offsets[i][0]
-                ),
-                math.floor(top_left_offsets[i][1]) : math.floor(
-                    bottom_right_offsets[i][1]
-                ),
-                math.floor(top_left_offsets[i][2]) : math.floor(
-                    bottom_right_offsets[i][2]
-                ),
-            ] = x
+                z1:z2,
+                y1:y2,
+                x1:x2,
+            ] = x.data
         image = image.compute()
 
         self.viewer.add_image(
