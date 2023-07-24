@@ -5,6 +5,8 @@ import napari
 
 
 class ArkitektPluginWidget(MikroNapariWidget):
+    """Arkitekt Plugin Widget"""
+
     def __init__(self, viewer: napari.viewer.Viewer) -> None:
         app = publicqt(identifier=identifier, version=version, logo=logo)
 
