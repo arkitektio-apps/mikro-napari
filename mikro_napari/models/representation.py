@@ -1,45 +1,44 @@
-from typing import Dict, List, Optional
-from qtpy import QtCore, QtWidgets
-from arkitekt.apps.connected import ConnectedApp
-from koil.qt import QtGenerator, QtRunner, QtGeneratorRunner, QtSignal, QtCoro, QtFuture
-from mikro.api.schema import (
-    InputVector,
-    MetricFragment,
-    LabelFragment,
-    FeatureFragment,
-    ROIFragment,
-    ListROIFragment,
-    RepresentationFragment,
-    RepresentationVariety,
-    StageFragment,
-    RoiTypeInput,
-    Watch_roisSubscriptionRois,
-    acreate_roi,
-    get_representation,
-    Create_roiMutation,
-    aget_rois,
-    awatch_rois,
-    OmeroFragmentPhysicalsize,
-    PositionFragment,
-)
 import asyncio
-from mikro_napari.api.schema import (
-    DetailLabelFragment,
-    aget_label_for,
-    Delete_roiMutationDeleteroi,
-    delete_roi,
-    adelete_roi,
-    get_image_stage,
-)
 import math
-from rath.scalars import ID
+import uuid
+from typing import Dict, List, Optional
+from arkitekt import App
 import dask.array as da
 import napari
-from napari.layers.shapes._shapes_constants import Mode
 import numpy as np
-import uuid
+from napari.layers.shapes._shapes_constants import Mode
+from qtpy import QtCore, QtWidgets
+from koil.qt import QtCoro, QtFuture, QtGenerator, QtGeneratorRunner, QtRunner, QtSignal
+from mikro.api.schema import (
+    Create_roiMutation,
+    FeatureFragment,
+    InputVector,
+    LabelFragment,
+    ListROIFragment,
+    MetricFragment,
+    OmeroFragmentPhysicalsize,
+    PositionFragment,
+    RepresentationFragment,
+    RepresentationVariety,
+    ROIFragment,
+    RoiTypeInput,
+    StageFragment,
+    Watch_roisSubscriptionRois,
+    acreate_roi,
+    aget_rois,
+    awatch_rois,
+    get_representation,
+)
+from mikro_napari.api.schema import (
+    Delete_roiMutationDeleteroi,
+    DetailLabelFragment,
+    adelete_roi,
+    aget_label_for,
+    delete_roi,
+    get_image_stage,
+)
 from mikro_napari.utils import NapariROI, convert_roi_to_napari_roi
-
+from rath.scalars import ID
 
 DESIGN_MODE_MAP = {
     Mode.ADD_RECTANGLE: RoiTypeInput.RECTANGLE,
@@ -186,7 +185,13 @@ class RoiLayer(ManagedLayer):
     roi_event_deleted = QtCore.Signal(str)
     roi_event_updated = QtCore.Signal(ListROIFragment)
 
-    def __init__(self, image: RepresentationFragment, *args, **kwargs) -> None:
+    def __init__(
+        self,
+        image: RepresentationFragment,
+        scale_to_physical_size: bool = True,
+        *args,
+        **kwargs,
+    ) -> None:
         super().__init__(*args, **kwargs)
         self.image = image
         self.get_rois_query = QtRunner(aget_rois)
@@ -205,6 +210,7 @@ class RoiLayer(ManagedLayer):
         self.watch_rois_subscription.yielded.connect(self.on_rois_updated)
         self.watch_rois_subscription.errored.connect(print)
 
+        self.scale_to_physical_size = scale_to_physical_size
         self.koiled_create_rois = QtSignal(self.create_rois_runner.returned)
 
         self.layer = None
@@ -345,12 +351,18 @@ class ImageLayer(ManagedLayer):
     on_rep_layer_clicked = QtCore.Signal(RepresentationFragment)
 
     def __init__(
-        self, image: RepresentationFragment, with_rois=True, *args, **kwargs
+        self,
+        image: RepresentationFragment,
+        scale_to_physical_size: bool = False,
+        with_rois=True,
+        *args,
+        **kwargs,
     ) -> None:
         super().__init__(*args, **kwargs)
         self.managed_image = image
         self._image_layer = None
         self.with_rois = with_rois
+        self.scale_to_physical_size = scale_to_physical_size
         self.roi_layer = None
 
     def on_destroy(self):
@@ -362,8 +374,12 @@ class ImageLayer(ManagedLayer):
 
         scale = None
 
-        if self.managed_image.omero and self.managed_image.omero.physical_size:
-            # scale = self.managed_image.omero.physical_size.to_scale()
+        if (
+            self.managed_image.omero
+            and self.managed_image.omero.physical_size
+            and self.scale_to_physical_size
+        ):
+            scale = self.managed_image.omero.physical_size.to_scale()
             pass
 
         if self.managed_image.variety == RepresentationVariety.RGB:
@@ -396,7 +412,7 @@ class RepresentationQtModel(QtCore.QObject):
     def __init__(self, widget, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.widget = widget
-        self.app: ConnectedApp = self.widget.app
+        self.app: App = self.widget.app
         self.viewer: napari.Viewer = self.widget.viewer
 
         self.managed_layers: Dict[str, ImageLayer] = {}
@@ -412,9 +428,13 @@ class RepresentationQtModel(QtCore.QObject):
         self.create_image_layer_coro = QtCoro(self.create_image_layer, autoresolve=True)
         self.create_roi_layer_coro = QtCoro(self.create_roi_layer, autoresolve=True)
 
-    def create_image_layer(self, image: RepresentationFragment) -> ImageLayer:
+    def create_image_layer(
+        self, image: RepresentationFragment, scale_to_physical_size: bool = True
+    ) -> ImageLayer:
         if image.id not in self.managed_layers:
-            layer = ImageLayer(image, viewer=self.viewer)
+            layer = ImageLayer(
+                image, viewer=self.viewer, scale_to_physical_size=scale_to_physical_size
+            )
             self.managed_layers[image.id] = layer
         else:  # pragma: no cover
             layer = self.managed_layers[image.id]
@@ -423,10 +443,16 @@ class RepresentationQtModel(QtCore.QObject):
         return layer
 
     def create_roi_layer(
-        self, image: RepresentationFragment, fetch_rois=True, watch_rois=True
+        self,
+        image: RepresentationFragment,
+        scale_to_physical_size: bool = True,
+        fetch_rois=True,
+        watch_rois=True,
     ) -> RoiLayer:
         if image.id not in self.managed_roi_layers:
-            layer = RoiLayer(image, viewer=self.viewer)
+            layer = RoiLayer(
+                image, viewer=self.viewer, scale_to_physical_size=scale_to_physical_size
+            )
             self.managed_roi_layers[image.id] = layer
         else:  # pragma: no cover
             layer = self.managed_roi_layers[image.id]
@@ -434,7 +460,12 @@ class RepresentationQtModel(QtCore.QObject):
         layer.show(fetch_rois=fetch_rois, watch_rois=watch_rois)
         return layer
 
-    def on_image_loaded(self, rep: RepresentationFragment, show_roi_layer: bool = True):
+    def on_image_loaded(
+        self,
+        rep: RepresentationFragment,
+        show_roi_layer: bool = True,
+        scale_to_physical_size: bool = True,
+    ):
         """Show on Napari
 
         Loads the image into the viewer
@@ -442,7 +473,7 @@ class RepresentationQtModel(QtCore.QObject):
         Args:
             rep (RepresentationFragment): The Image
         """
-        self.create_image_layer(rep)
+        self.create_image_layer(rep, scale_to_physical_size=scale_to_physical_size)
         if show_roi_layer:
             self.create_roi_layer(rep)
 

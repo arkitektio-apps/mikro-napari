@@ -9,7 +9,7 @@ from mikro.api.schema import (
 )
 from qtpy import QtWidgets
 from qtpy import QtCore
-from arkitekt.apps.connected import ConnectedApp
+from arkitekt.apps.default import App
 from arkitekt.qt.magic_bar import AppState, MagicBar
 from mikro_napari.models.representation import RepresentationQtModel
 from mikro_napari.widgets.dialogs.open_image import OpenImageDialog
@@ -45,9 +45,11 @@ MULTISCALE_REPRESENTATIONS = SearchWidget(
 class MikroNapariWidget(QtWidgets.QWidget):
     emit_image: QtCore.Signal = QtCore.Signal(object)
 
-    def __init__(
-        self, viewer: napari.Viewer, app: ConnectedApp, *args, **kwargs
-    ) -> None:
+    def on_arkitekt_error(self, e):
+        print(e)
+        self.viewer.status = str(e)
+
+    def __init__(self, viewer: napari.Viewer, app: App, *args, **kwargs) -> None:
         super(MikroNapariWidget, self).__init__(*args, **kwargs)
 
         self.viewer = viewer
@@ -59,7 +61,11 @@ class MikroNapariWidget(QtWidgets.QWidget):
 
         self.representation_controller = RepresentationQtModel(self)
 
-        self.magic_bar = MagicBar(self.app, dark_mode=True)
+        self.magic_bar = MagicBar(
+            self.app,
+            dark_mode=True,
+            on_error=self.on_arkitekt_error,
+        )
         self.magic_bar.app_up.connect(self.on_app_up)
         self.magic_bar.app_down.connect(self.on_app_down)
 

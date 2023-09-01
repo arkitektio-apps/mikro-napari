@@ -7,7 +7,7 @@ from mikro.api.schema import (
 )
 from qtpy import QtWidgets
 from qtpy import QtCore
-from arkitekt.apps.connected import ConnectedApp
+from arkitekt import App
 from mikro_napari.utils import NapariROI
 from napari.layers.image import Image
 from mikro_napari.api.schema import (
@@ -23,7 +23,7 @@ import webbrowser
 class RoiWidget(QtWidgets.QWidget):
     """A widget for displaying ROIs."""
 
-    def __init__(self, app: ConnectedApp, roi: NapariROI, *args, **kwargs) -> None:
+    def __init__(self, app: App, roi: NapariROI, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
         self._layout = QtWidgets.QVBoxLayout()
@@ -140,9 +140,7 @@ class RepresentationWidget(QtWidgets.QWidget):
 class SidebarWidget(QtWidgets.QWidget):
     emit_image: QtCore.Signal = QtCore.Signal(object)
 
-    def __init__(
-        self, viewer: napari.Viewer, app: ConnectedApp = None, *args, **kwargs
-    ) -> None:
+    def __init__(self, viewer: napari.Viewer, app: App = None, *args, **kwargs) -> None:
         super(SidebarWidget, self).__init__(*args, **kwargs)
         self.viewer = viewer
         self.viewer.window.sidebar = self

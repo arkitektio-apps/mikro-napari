@@ -1,19 +1,19 @@
-from mikro.traits import (
-    Representation,
-    Omero,
-    Position,
-    PhysicalSize,
-    ROI,
-    Stage,
-    Vectorizable,
-)
-from typing import Literal, List, Tuple, Optional, AsyncIterator, Dict, Iterator
-from mikro.scalars import FeatureValue, Store, AssignationID, MetricValue, AffineMatrix
-from mikro.rath import MikroRath
+from typing import Literal, Iterator, List, Dict, Optional, AsyncIterator, Tuple
 from datetime import datetime
-from rath.scalars import ID
-from mikro.funcs import execute, subscribe, asubscribe, aexecute
+from mikro.rath import MikroRath
+from mikro.funcs import asubscribe, execute, aexecute, subscribe
+from mikro.traits import (
+    Stage,
+    ROI,
+    PhysicalSize,
+    Representation,
+    Vectorizable,
+    Position,
+    Omero,
+)
+from mikro.scalars import Store, MetricValue, FeatureValue, AffineMatrix, AssignationID
 from pydantic import BaseModel, Field
+from rath.scalars import ID
 from enum import Enum
 
 
@@ -249,19 +249,6 @@ class Medium(str, Enum):
     WATER = "WATER"
 
 
-class RepresentationVariety(str, Enum):
-    """An enumeration."""
-
-    MASK = "MASK"
-    "Mask (Value represent Labels)"
-    VOXEL = "VOXEL"
-    "Voxel (Value represent Intensity)"
-    RGB = "RGB"
-    "RGB (First three channel represent RGB)"
-    UNKNOWN = "UNKNOWN"
-    "Unknown"
-
-
 class RoiTypeInput(str, Enum):
     """An enumeration."""
 
@@ -283,6 +270,19 @@ class RoiTypeInput(str, Enum):
     "Slice"
     POINT = "POINT"
     "Point"
+
+
+class RepresentationVariety(str, Enum):
+    """An enumeration."""
+
+    MASK = "MASK"
+    "Mask (Value represent Labels)"
+    VOXEL = "VOXEL"
+    "Voxel (Value represent Intensity)"
+    RGB = "RGB"
+    "RGB (First three channel represent RGB)"
+    UNKNOWN = "UNKNOWN"
+    "Unknown"
 
 
 class ModelKind(str, Enum):
@@ -1394,7 +1394,7 @@ class Create_roiMutation(BaseModel):
     class Arguments(BaseModel):
         representation: ID
         vectors: List[Optional[InputVector]]
-        creator: Optional[ID]
+        creator: Optional[ID] = Field(default=None)
         type: RoiTypeInput
 
     class Meta:
@@ -1569,7 +1569,7 @@ class Get_image_stageQuery(BaseModel):
 
     class Arguments(BaseModel):
         id: ID
-        limit: Optional[int]
+        limit: Optional[int] = Field(default=None)
 
     class Meta:
         document = 'query get_image_stage($id: ID!, $limit: Int) {\n  stage(id: $id) {\n    positions {\n      x\n      y\n      z\n      omeros(order: "-acquired", limit: $limit) {\n        id\n        acquisitionDate\n        representation {\n          id\n          shape\n          store\n        }\n        physicalSize {\n          x\n          y\n          z\n          t\n          c\n        }\n      }\n    }\n  }\n}'
@@ -1592,7 +1592,7 @@ class Get_roisQuery(BaseModel):
 
     class Arguments(BaseModel):
         representation: ID
-        type: Optional[List[Optional[RoiTypeInput]]]
+        type: Optional[List[Optional[RoiTypeInput]]] = Field(default=None)
 
     class Meta:
         document = "fragment ROI on ROI {\n  id\n  vectors {\n    x\n    y\n    z\n    t\n    c\n  }\n  type\n  representation {\n    id\n  }\n  creator {\n    id\n    color\n  }\n}\n\nquery get_rois($representation: ID!, $type: [RoiTypeInput]) {\n  rois(representation: $representation, type: $type) {\n    ...ROI\n  }\n}"
@@ -1636,7 +1636,7 @@ class Search_roisQuery(BaseModel):
 
     class Arguments(BaseModel):
         search: str
-        values: Optional[List[Optional[ID]]]
+        values: Optional[List[Optional[ID]]] = Field(default=None)
 
     class Meta:
         document = "query search_rois($search: String!, $values: [ID]) {\n  options: rois(repname: $search, ids: $values) {\n    label: id\n    value: id\n  }\n}"
@@ -1644,7 +1644,7 @@ class Search_roisQuery(BaseModel):
 
 class Get_multiscale_repQuery(BaseModel):
     representation: Optional[MultiScaleRepresentationFragment]
-    "Get a single Representation by ID\n    \n    Returns a single Representation by ID. If the user does not have access\n    to the Representation, an error will be raised.\n    "
+    "Get a single Representation by ID\n\n    Returns a single Representation by ID. If the user does not have access\n    to the Representation, an error will be raised.\n    "
 
     class Arguments(BaseModel):
         id: ID
@@ -1655,7 +1655,7 @@ class Get_multiscale_repQuery(BaseModel):
 
 class Get_representationQuery(BaseModel):
     representation: Optional[RepresentationFragment]
-    "Get a single Representation by ID\n    \n    Returns a single Representation by ID. If the user does not have access\n    to the Representation, an error will be raised.\n    "
+    "Get a single Representation by ID\n\n    Returns a single Representation by ID. If the user does not have access\n    to the Representation, an error will be raised.\n    "
 
     class Arguments(BaseModel):
         id: ID
@@ -1666,7 +1666,7 @@ class Get_representationQuery(BaseModel):
 
 class Get_representation_and_maskQuery(BaseModel):
     representation: Optional[RepresentationAndMaskFragment]
-    "Get a single Representation by ID\n    \n    Returns a single Representation by ID. If the user does not have access\n    to the Representation, an error will be raised.\n    "
+    "Get a single Representation by ID\n\n    Returns a single Representation by ID. If the user does not have access\n    to the Representation, an error will be raised.\n    "
 
     class Arguments(BaseModel):
         id: ID
@@ -1677,7 +1677,7 @@ class Get_representation_and_maskQuery(BaseModel):
 
 class Get_some_representationsQuery(BaseModel):
     representations: Optional[Tuple[Optional[ListRepresentationFragment], ...]]
-    "All Representations\n    \n    This query returns all Representations that are stored on the platform\n    depending on the user's permissions. Generally, this query will return\n    all Representations that the user has access to. If the user is an amdin\n    or superuser, all Representations will be returned."
+    "All Representations\n\n    This query returns all Representations that are stored on the platform\n    depending on the user's permissions. Generally, this query will return\n    all Representations that the user has access to. If the user is an amdin\n    or superuser, all Representations will be returned."
 
     class Arguments(BaseModel):
         pass
@@ -1688,7 +1688,7 @@ class Get_some_representationsQuery(BaseModel):
 
 class DetailRepQuery(BaseModel):
     representation: Optional[DetailRepresentationFragment]
-    "Get a single Representation by ID\n    \n    Returns a single Representation by ID. If the user does not have access\n    to the Representation, an error will be raised.\n    "
+    "Get a single Representation by ID\n\n    Returns a single Representation by ID. If the user does not have access\n    to the Representation, an error will be raised.\n    "
 
     class Arguments(BaseModel):
         id: ID
