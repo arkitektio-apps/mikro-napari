@@ -5,6 +5,7 @@ from mikro.api.schema import (
     RepresentationVariety,
     from_xarray,
     afrom_xarray,
+    get_table,
     RepresentationFragment,
 )
 from qtpy import QtWidgets
@@ -13,6 +14,7 @@ from arkitekt.apps.default import App
 from arkitekt.qt.magic_bar import AppState, MagicBar
 from mikro_napari.models.representation import RepresentationQtModel
 from mikro_napari.widgets.dialogs.open_image import OpenImageDialog
+from .base import BaseMikroNapariWidget
 import xarray as xr
 from rekuest.qt.builders import qtinloopactifier
 
@@ -42,23 +44,13 @@ MULTISCALE_REPRESENTATIONS = SearchWidget(
 )
 
 
-class MikroNapariWidget(QtWidgets.QWidget):
+class MikroNapariWidget(BaseMikroNapariWidget):
     emit_image: QtCore.Signal = QtCore.Signal(object)
 
-    def on_arkitekt_error(self, e):
-        print(e)
-        self.viewer.status = str(e)
 
-    def __init__(self, viewer: napari.Viewer, app: App, *args, **kwargs) -> None:
+    def __init__(self, *args, **kwargs) -> None:
         super(MikroNapariWidget, self).__init__(*args, **kwargs)
-
-        self.viewer = viewer
-
         self.mylayout = QtWidgets.QVBoxLayout()
-
-        self.app = app
-        self.viewer.window.app = self.app
-
         self.representation_controller = RepresentationQtModel(self)
 
         self.magic_bar = MagicBar(
@@ -78,18 +70,8 @@ class MikroNapariWidget(QtWidgets.QWidget):
         self.task = None
         self.stask = None
 
-        self.open_image_button = QtWidgets.QPushButton("Open Image")
-        self.open_image_button.clicked.connect(self.cause_image_load)
-        self.open_image_button.setEnabled(False)
-
-        self.upload_image_button = QtWidgets.QPushButton("Upload Image")
-        self.upload_image_button.clicked.connect(self.cause_upload)
-        self.upload_image_button.setEnabled(False)
-
         self.active_non_mikro_layers = []
         self.active_mikro_layers = []
-        self.mylayout.addWidget(self.open_image_button)
-        self.mylayout.addWidget(self.upload_image_button)
         self.mylayout.addWidget(self.magic_bar)
 
         self.setWindowTitle("My Own Title")
@@ -151,12 +133,16 @@ class MikroNapariWidget(QtWidgets.QWidget):
             collections=["creation", "interactive"],
         )
 
+    
+    def on_arkitekt_error(self, e):
+        print(e)
+        self.viewer.status = str(e)
+
     def on_app_up(self):
-        self.open_image_button.setEnabled(True)
         self.on_selection_changed()  # TRIGGER ALSO HERE
 
     def on_app_down(self):
-        self.open_image_button.setEnabled(False)
+        pass
 
     def on_selection_changed(self):
         self.active_non_mikro_layers = [
@@ -170,12 +156,7 @@ class MikroNapariWidget(QtWidgets.QWidget):
             if layer.metadata.get("mikro")
         ]
 
-        if self.active_non_mikro_layers and not self.active_mikro_layers:
-            self.upload_image_button.setText("Upload Layer")
-            self.upload_image_button.setEnabled(self.magic_bar.state == AppState.UP)
-        else:
-            self.upload_image_button.setText("Upload Layer")
-            self.upload_image_button.setEnabled(False)
+        pass
 
     def upload_layer(self, name: str = "") -> RepresentationFragment:
         """Upload Napari Layer

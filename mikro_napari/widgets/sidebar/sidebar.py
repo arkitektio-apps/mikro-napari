@@ -4,6 +4,8 @@ from mikro.api.schema import (
     ROIFragment,
     aexpand_roi,
     RepresentationFragment,
+    TableFragment,
+    get_table,
 )
 from qtpy import QtWidgets
 from qtpy import QtCore
@@ -18,6 +20,8 @@ from mikro_napari.api.schema import (
     DetailRepresentationFragmentMetrics,
 )
 import webbrowser
+from mikro_napari.widgets.table.table_widget import TableWidget
+from mikro_napari.widgets.base import BaseMikroNapariWidget
 
 
 class RoiWidget(QtWidgets.QWidget):
@@ -137,26 +141,23 @@ class RepresentationWidget(QtWidgets.QWidget):
                 self._layout.addWidget(MetricWidget(metric))
 
 
-class SidebarWidget(QtWidgets.QWidget):
+class SidebarWidget(BaseMikroNapariWidget):
     emit_image: QtCore.Signal = QtCore.Signal(object)
 
-    def __init__(self, viewer: napari.Viewer, app: App = None, *args, **kwargs) -> None:
+    def __init__(self, *args, **kwargs) -> None:
         super(SidebarWidget, self).__init__(*args, **kwargs)
-        self.viewer = viewer
-        self.viewer.window.sidebar = self
 
         self.mylayout = QtWidgets.QVBoxLayout()
-        self.app = app
-
-        self.open_image_button = QtWidgets.QPushButton("Change Content")
 
         self._active_widget = QtWidgets.QLabel("Nothing selected")
         self.mylayout.addWidget(self._active_widget)
-        self.mylayout.addStretch()
 
         self.viewer.layers.selection.events.changed.connect(self.on_layer_changed)
 
         self.setLayout(self.mylayout)
+
+    def show_table_widget(self, table: TableFragment):
+        self.replace_widget(TableWidget(table, viewer=self.viewer, app=self.app))
 
     def replace_widget(self, widget):
         self.mylayout.removeWidget(self._active_widget)

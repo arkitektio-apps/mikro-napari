@@ -1,28 +1,29 @@
 from mikro_napari.widgets.main_widget import MikroNapariWidget
 import napari
 import argparse
-
+from mikro_napari.controllers.app import AppController
 from mikro_napari.widgets.sidebar.sidebar import SidebarWidget
 import os
-from arkitekt.builders import publicqt
-from mikro_napari.manifest import identifier, version, logo
-
+from mikro_napari.global_app import get_app_or_build_for_widget
 
 def main(**kwargs):
     os.environ["NAPARI_ASYNC"] = "1"
 
     viewer = napari.Viewer()
 
-    app = publicqt(identifier, version, parent=viewer.window.qt_viewer, logo=logo)
+    app = get_app_or_build_for_widget(viewer.window.qt_viewer)
 
-    widget = MikroNapariWidget(viewer, app, **kwargs)
-    sidebar = SidebarWidget(viewer, app, **kwargs)
-    viewer.window.add_dock_widget(widget, area="left", name="Mikro")
-    viewer.window.add_dock_widget(sidebar, area="right", name="Mikro")
+    sidebar = SidebarWidget(viewer=viewer, app=app, **kwargs)
+    widget = MikroNapariWidget(viewer=viewer, app=app, **kwargs)
+
+    app_controller = AppController(sidebar, app=app, viewer=viewer)
+    viewer.window.add_dock_widget(widget, area="left", name="Mikro Napari")
+    viewer.window.add_dock_widget(sidebar, area="right", name="Mikro Sidebar")
     # viewer.add_image(astronaut(), name="astronaut")
 
-    with app:
-        napari.run()
+
+
+    napari.run()
 
 
 if __name__ == "__main__":

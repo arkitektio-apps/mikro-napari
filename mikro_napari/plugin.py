@@ -1,15 +1,22 @@
-from arkitekt.builders import publicqt
+from arkitekt.builders import publicscheduleqt
 from mikro_napari.widgets.main_widget import MikroNapariWidget
+from mikro_napari.widgets.sidebar.sidebar import SidebarWidget
 from mikro_napari.manifest import identifier, version, logo
 import napari
+from napari import Viewer
 
+global_app = None
 
 class ArkitektPluginWidget(MikroNapariWidget):
     """Arkitekt Plugin Widget"""
 
-    def __init__(self, viewer: napari.viewer.Viewer) -> None:
-        app = publicqt(identifier=identifier, version=version, logo=logo)
+    def __init__(self, viewer: Viewer) -> None:
+        super(ArkitektPluginWidget, self).__init__(viewer=viewer)
 
-        super(ArkitektPluginWidget, self).__init__(viewer, app)
 
-        app.enter()
+
+class ArkitektPluginSidebar(SidebarWidget):
+
+
+    def __init__(self, viewer: Viewer) -> None:
+        super(ArkitektPluginSidebar, self).__init__(viewer=viewer)
