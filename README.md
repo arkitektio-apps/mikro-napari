@@ -9,7 +9,6 @@
 
 mikro napari enables napari on the mikro/arkitekt platform
 
-# DEVELOPMENT
 
 ## Idea
 
@@ -19,12 +18,38 @@ data on the mikro platform (synchronised between all of your napari instances) a
 
 ## Install
 
-Simple install this plugin via naparis plugin-manager and enable it. 
-Login with your local mikro/arkitekt platform and start using it in workflows
+This plugin is available on the napari plugin-manager, where you can install it through
+the UI.Login with your local mikro/arkitekt platform and start using it in workflows
 
 You can also install mikro-napari directly in your enviroment 
 
 ```bash
 pip install mikro-napari napari[pyqt5]
 ```
+
+## Usage
+
+If you want to start the plugin from the command line, you can use the following command
+
+```bash
+mikro-napari
+```
+
+This  starts napari with the mikro-napari plugin enabled by default.
+
+For more information on how to use mikro-napari check out the [documentation](https://arkitekt.live)
+
+
+## Development
+
+If you want to contribute to this project, you can clone the repository and install the package in development mode
+
+```bash
+git clone
+cd mikro-napari
+poetry install --all-extras
+```
+
+This will install the package in development mode and install all dependencies.
+
 

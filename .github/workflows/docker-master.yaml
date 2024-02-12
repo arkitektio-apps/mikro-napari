@@ -2,10 +2,10 @@ name: CI
 on:
   push:
     branches: [master]
-    paths: [rath/**, tests/**]
+    paths: [mikro_napari/**, tests/**]
   pull_request:
     branches: [master]
-    paths: [rath/**, tests/**]
+    paths: [mikro_napari/**, tests/**]
 jobs:
   mac_and_windows_unit:
     strategy:
