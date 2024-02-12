@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mikro-napari"
-version = "0.1.56"
+version = "0.1.63"
 description = "A napari plugin to interact with and provide functionality for a connected arkitekt server"
 readme = "README.md"
 repository = "https://github.com/jhnnsrs/mikro-napari"
@@ -11,7 +11,7 @@ classifiers = ["Framework :: napari"]
 
 [tool.poetry.dependencies]
 python = ">=3.8,<=3.12"
-arkitekt = { version = ">=0.5.40", extras = [
+arkitekt = { version = ">=0.7.8", extras = [
     "reaktion",
     "rekuest",
     "mikro",
@@ -29,7 +29,7 @@ ignore_missing_imports = true
 
 
 [tool.ruff]
-extend-select = ["ANN", "D1", "F401"]
+extend-select = ["ANN001","ANN204", "F401"]
 
 # Exclude a variety of commonly ignored directories.
 exclude = [

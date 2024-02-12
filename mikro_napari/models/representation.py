@@ -1,16 +1,14 @@
 import asyncio
 import math
-import uuid
-from typing import Dict, List, Optional
+from typing import Dict, List
 from arkitekt import App
 import dask.array as da
 import napari
 import numpy as np
 from napari.layers.shapes._shapes_constants import Mode
 from qtpy import QtCore, QtWidgets
-from koil.qt import QtCoro, QtFuture, QtGenerator, QtGeneratorRunner, QtRunner, QtSignal
+from koil.qt import QtCoro, QtFuture, QtGeneratorRunner, QtRunner, QtSignal
 from mikro.api.schema import (
-    Create_roiMutation,
     FeatureFragment,
     InputVector,
     LabelFragment,
@@ -33,12 +31,10 @@ from mikro_napari.api.schema import (
     Delete_roiMutationDeleteroi,
     DetailLabelFragment,
     adelete_roi,
-    aget_label_for,
     delete_roi,
     get_image_stage,
 )
 from mikro_napari.utils import NapariROI, convert_roi_to_napari_roi
-from rath.scalars import ID
 
 DESIGN_MODE_MAP = {
     Mode.ADD_RECTANGLE: RoiTypeInput.RECTANGLE,
@@ -564,7 +560,7 @@ class RepresentationQtModel(QtCore.QObject):
         shapes = np.array(view_shapes)
 
         offset_min = offset.min(axis=0)
-        x_max = offset.max(axis=0)
+        offset.max(axis=0)
 
         # rescale positions to fit in view
         top_left_offsets = offset - offset_min
@@ -576,9 +572,9 @@ class RepresentationQtModel(QtCore.QObject):
         bottom_right_max = bottom_right_offsets.max(axis=0)
         bottom_right_max_ceiling = np.ceil(bottom_right_max).astype(int)
 
-        xmax = np.max([p.x for p in stage.positions]) or 1
-        ymax = np.max([p.y for p in stage.positions]) or 1
-        zmax = np.max([p.z for p in stage.positions]) or 1
+        np.max([p.x for p in stage.positions]) or 1
+        np.max([p.y for p in stage.positions]) or 1
+        np.max([p.z for p in stage.positions]) or 1
 
         image = da.zeros(
             (
@@ -665,7 +661,7 @@ class RepresentationQtModel(QtCore.QObject):
         Returns:
             rois (List[RoiFragment]): The Image
         """
-        layer = await self.create_image_layer_coro.acall(rep)
+        await self.create_image_layer_coro.acall(rep)
         roilayer = await self.create_roi_layer_coro.acall(rep, fetch_rois=show_old_rois)
 
         create_listener = roilayer.koiled_create_rois

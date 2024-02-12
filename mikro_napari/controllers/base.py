@@ -1,7 +1,6 @@
-import qtpy
 from arkitekt import App
 from napari import Viewer
-from qtpy import QtWidgets, QtCore
+from qtpy import QtCore
 
 
 class BaseMikroNapariController(QtCore.QObject):

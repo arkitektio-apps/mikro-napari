@@ -16,7 +16,7 @@ def main(**kwargs):
     sidebar = SidebarWidget(viewer=viewer, app=app, **kwargs)
     widget = MikroNapariWidget(viewer=viewer, app=app, **kwargs)
 
-    app_controller = AppController(sidebar, app=app, viewer=viewer)
+    AppController(sidebar, app=app, viewer=viewer)
     viewer.window.add_dock_widget(widget, area="left", name="Mikro Napari")
     viewer.window.add_dock_widget(sidebar, area="right", name="Mikro Sidebar")
     # viewer.add_image(astronaut(), name="astronaut")

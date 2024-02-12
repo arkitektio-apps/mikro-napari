@@ -1,17 +1,14 @@
-import napari
 from rekuest.widgets import SearchWidget
 from koil.qt import QtRunner
 from mikro.api.schema import (
     RepresentationVariety,
     from_xarray,
     afrom_xarray,
-    get_table,
     RepresentationFragment,
 )
 from qtpy import QtWidgets
 from qtpy import QtCore
-from arkitekt.apps.default import App
-from arkitekt.qt.magic_bar import AppState, MagicBar
+from arkitekt.qt.magic_bar import MagicBar
 from mikro_napari.models.representation import RepresentationQtModel
 from mikro_napari.widgets.dialogs.open_image import OpenImageDialog
 from .base import BaseMikroNapariWidget

@@ -1,16 +1,12 @@
 import pandas as pd
 
-from qtpy.QtWidgets import QTableView, QApplication
 from qtpy.QtCore import QAbstractTableModel, Qt, QModelIndex
-from qtpy import QtWidgets, QtCore
-import napari
-from arkitekt import App
 
 
 class PandasModel(QAbstractTableModel):
     """A model to interface a Qt view with pandas dataframe"""
 
-    def __init__(self, dataframe: pd.DataFrame, parent=None):
+    def __init__(self, dataframe: pd.DataFrame, parent=None) -> None:
         QAbstractTableModel.__init__(self, parent)
         self._dataframe = dataframe
 

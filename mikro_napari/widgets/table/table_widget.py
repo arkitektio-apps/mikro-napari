@@ -1,10 +1,6 @@
-import pandas as pd
 from mikro.api.schema import TableFragment
-from qtpy.QtWidgets import QTableView, QApplication
-from qtpy.QtCore import QAbstractTableModel, Qt, QModelIndex
+from qtpy.QtWidgets import QTableView, QWidget
 from qtpy import QtWidgets, QtCore
-import napari
-from arkitekt import App
 from mikro_napari.widgets.base import BaseMikroNapariWidget
 from .dataframe import PandasModel
 
@@ -29,7 +25,7 @@ class TableWidget(BaseMikroNapariWidget):
 
         self.setLayout(self.mylayout)
 
-    def replace_widget(self, widget):
+    def replace_widget(self, widget: QWidget):
         self.mylayout.removeWidget(self._active_widget)
         del self._active_widget
         self._active_widget = widget

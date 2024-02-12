@@ -1,17 +1,14 @@
-import napari
 from koil.qt import QtRunner
 from mikro.api.schema import (
     ROIFragment,
     aexpand_roi,
     RepresentationFragment,
     TableFragment,
-    get_table,
 )
 from qtpy import QtWidgets
 from qtpy import QtCore
 from arkitekt import App
 from mikro_napari.utils import NapariROI
-from napari.layers.image import Image
 from mikro_napari.api.schema import (
     adetail_rep,
     DetailRepresentationFragment,

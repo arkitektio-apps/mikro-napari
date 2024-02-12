@@ -1,8 +1,5 @@
-from arkitekt.builders import publicscheduleqt
 from mikro_napari.widgets.main_widget import MikroNapariWidget
 from mikro_napari.widgets.sidebar.sidebar import SidebarWidget
-from mikro_napari.manifest import identifier, version, logo
-import napari
 from napari import Viewer
 
 global_app = None
