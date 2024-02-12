@@ -72,6 +72,7 @@ pytest-aiohttp = "^1.0.4"
 ruff = "^0.0.254"
 mypy = "^1.0.1"
 napari = "^0.4.17"
+pytest-qt = "^4.4.0"
 
 
 [tool.poetry.plugins."napari.manifest"]
