@@ -44,7 +44,6 @@ MULTISCALE_REPRESENTATIONS = SearchWidget(
 class MikroNapariWidget(BaseMikroNapariWidget):
     emit_image: QtCore.Signal = QtCore.Signal(object)
 
-
     def __init__(self, *args, **kwargs) -> None:
         super(MikroNapariWidget, self).__init__(*args, **kwargs)
         self.mylayout = QtWidgets.QVBoxLayout()
@@ -81,6 +80,12 @@ class MikroNapariWidget(BaseMikroNapariWidget):
             actifier=qtinloopactifier,
             parent=self,
             collections=["display", "interactive"],
+        )
+        self.app.rekuest.register(
+            self.representation_controller.open_image,
+            actifier=qtinloopactifier,
+            parent=self,
+            collections=["display"],
         )
         self.app.rekuest.register(
             self.representation_controller.open_feature,
@@ -130,7 +135,6 @@ class MikroNapariWidget(BaseMikroNapariWidget):
             collections=["creation", "interactive"],
         )
 
-    
     def on_arkitekt_error(self, e):
         print(e)
         self.viewer.status = str(e)

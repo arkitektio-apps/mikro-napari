@@ -473,6 +473,22 @@ class RepresentationQtModel(QtCore.QObject):
         if show_roi_layer:
             self.create_roi_layer(rep)
 
+    def open_image(
+        self,
+        image: RepresentationFragment,
+    ) -> None:
+        """Show Image
+
+        Show an image on a bioimage app
+
+        Parameters
+        ----------
+        a : RepresentationFragment
+            The image
+
+        """
+        self.create_image_layer(image)
+
     def open_metric(self, metric: MetricFragment):
         """Open a metric
 
